@@ -1,3 +1,7 @@
+# Compose volumes
+database-v
+rabbitmq-v
+
 # Logs
 logs
 *.log
