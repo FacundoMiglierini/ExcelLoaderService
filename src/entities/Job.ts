@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { Job } from "../interfaces/Job";
+import { Job } from "../interfaces/IJob";
 
 export const jobSchema = new Schema<Job>({
     id: { type: String, required: true, unique: true },

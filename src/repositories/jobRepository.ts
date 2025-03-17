@@ -1,6 +1,5 @@
-import mongoose, { Model } from "mongoose";
 import { IJobRepository } from "../interfaces/IJobRepository";
-import { Job } from "../interfaces/Job";
+import { Job } from "../interfaces/IJob";
 import { JobModel } from "../entities/Job";
 
 export class JobRepository implements IJobRepository {

@@ -1,4 +1,4 @@
-import { Job } from "./Job";
+import { Job } from "./IJob";
 
 export interface IJobRepository {
     create(data: Job): Promise<Job>;
