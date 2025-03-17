@@ -1,6 +1,6 @@
-import { Job } from '../entities/Job';
+import { Job } from "./Job";
 
 export interface IJobRepository {
     create(data: Job): Promise<Job>;
-    find(id: number): Promise<Job>;
+    find(id: Number): Promise<Job>;
 }

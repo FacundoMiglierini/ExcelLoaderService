@@ -1,4 +1,4 @@
 export interface IJobInteractor {
-    createJob(input: any);
-    getJobStatus(id: Number);
+    createJob(input: any): any;
+    getJobStatus(id: Number): any;
 }
