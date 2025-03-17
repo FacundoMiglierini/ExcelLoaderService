@@ -2,8 +2,8 @@ import http from 'http';
 import express from 'express';
 import mongoose from 'mongoose';
 
-import router from './routes';
-import {server, mongo} from './config/config';
+import jobRouter from './routes/jobRoutes';
+import {server, database} from './config/config';
 
 
 const app: express.Application = express();
@@ -14,14 +14,14 @@ export const Main = async () => {
   app.use(express.json());
 
   try {
-    const connection = await mongoose.connect(mongo.MONGO_CONNECTION, mongo.MONGO_OPTIONS);
+    const connection = await mongoose.connect(database.URI, database.DATABASE_OPTIONS);
     console.log('Connected to Mongo: ', connection.version);
   } catch (error) {
     console.log('Unnable to connect to Mongo')
     console.error(error)
   }
 
-  app.use(router);
+  app.use(jobRouter);
 
   httpServer = http.createServer(app);
   httpServer.listen(server.SERVER_PORT, () => {
