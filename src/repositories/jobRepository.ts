@@ -22,4 +22,15 @@ export class JobRepository implements IJobRepository {
         return job;
     }
 
+    async updateStatus(id: Number, status: String): Promise<boolean> {
+
+        const res = await JobModel.updateOne({ id: id }, { status: status});
+
+        if (!res.acknowledged) {
+            throw new Error(`Job with ID ${id} not found.`);
+        }
+
+        return res.acknowledged;
+    }
+
 }
