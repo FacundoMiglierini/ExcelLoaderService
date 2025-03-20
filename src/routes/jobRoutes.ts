@@ -10,9 +10,6 @@ const controller = new JobController(interactor);
 
 const jobRouter = express.Router();
 
-//jobRouter.post("/jobs", controller.onCreateJob.bind(controller));
-//jobRouter.get("/jobs/:id", controller.onGetJobStatus.bind(controller));
-
 jobRouter.post("/jobs", async (req, res, next) => {
     await controller.onCreateJob(req, res, next);
 });
