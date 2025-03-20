@@ -11,10 +11,20 @@ export class JobRepository implements IJobRepository {
         return job;
     }
 
-    async find(id: number): Promise<Job> {
+    async find(id: string, pagination?: { offset?: number; limit?: number }): Promise<Job> {
 
-        const job = await JobModel.findOne({id: id}).exec();
-            
+        const query = JobModel.findOne({ id });
+          
+        if (pagination) {
+            query.select({
+              errors: {
+                $slice: [pagination.offset || 0, pagination.limit || 10]
+              }
+            });
+        }
+
+        const job = await query.exec();
+
         if (!job) {
             throw new Error(`Job with ID ${id} not found.`);
         }
@@ -22,9 +32,20 @@ export class JobRepository implements IJobRepository {
         return job;
     }
 
-    async updateStatus(id: Number, status: String): Promise<boolean> {
+    async updateStatus(id: string, status: string): Promise<boolean> {
 
-        const res = await JobModel.updateOne({ id: id }, { status: status});
+        const res = await JobModel.updateOne({ id }, { status: status});
+
+        if (!res.acknowledged) {
+            throw new Error(`Job with ID ${id} not found.`);
+        }
+
+        return res.acknowledged;
+    }
+
+    async updateErrors(id: string, errors: Object): Promise<boolean> {
+       
+        const res = await JobModel.updateOne({ id: id }, { job_errors: errors});
 
         if (!res.acknowledged) {
             throw new Error(`Job with ID ${id} not found.`);

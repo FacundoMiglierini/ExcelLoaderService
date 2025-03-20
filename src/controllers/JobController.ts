@@ -26,9 +26,7 @@ export class JobController {
     async onGetJobStatus(req: Request, res: Response, next: NextFunction) {
         try {
 
-            const id = parseInt(req.params.id);
-
-            const data = await this.interactor.getJobStatus(id);
+            const data = await this.interactor.getJobStatus(req.params.id);
 
             return res.status(200).json(data);
 
@@ -41,10 +39,7 @@ export class JobController {
     async onUpdateJobStatus(req: Request, res: Response, next: NextFunction) {
         try {
 
-            const id = parseInt(req.params.id);
-            const status = req.params.status;
-
-            const data = await this.interactor.updateJobStatus(id, status);
+            const data = await this.interactor.updateJobStatus(req.params.id, req.params.status);
 
             return res.status(200).json(data);
 

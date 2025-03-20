@@ -9,7 +9,7 @@ export class FileRepository implements IFileRepository {
         return await FileModel.create(data);
     }
 
-    async find(id: number): Promise<File> {
+    async find(id: string): Promise<File> {
 
         const file = await FileModel.findOne({id: id}).exec();
             

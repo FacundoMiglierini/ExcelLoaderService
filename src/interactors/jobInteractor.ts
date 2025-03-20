@@ -1,5 +1,4 @@
 import { JobModel } from "../entities/Job";
-import { Job } from "../interfaces/IJob";
 import { IJobInteractor } from "../interfaces/IJobInteractor";
 import { IJobRepository } from "../interfaces/IJobRepository";
 import { publish } from "../rabbitmqConnection";
@@ -13,30 +12,24 @@ export class JobInteractor implements IJobInteractor {
     }
 
     async createJob(input: any) {
-        const jobDoc = new JobModel({
-            id: 17,
-            state: 'pending',
-            job_errors: [],
-            file_id: ''
-        });
 
+        const jobDoc = new JobModel();
         const job = await this.repository.create(jobDoc);
-        const jobId = job!.id 
 
-        await publish({input: input, jobId: jobId});
+        await publish({input: input, jobId: job.id});
 
-        return jobId;
+        return job.id;
     }
 
-    async updateJobStatus(id: Number, state: String) {
+    async updateJobStatus(id: string, state: string) {
 
         this.repository.updateStatus(id, state);
 
     }
 
-    async getJobStatus(id: Number) {
+    async getJobStatus(id: string, pagination?: { offset?: number; limit?: number }) {
 
-        return this.repository.find(id);
+        return this.repository.find(id, pagination);
     }
 
 }
