@@ -12,7 +12,7 @@ const fileRouter = express.Router();
 //jobRouter.post("/jobs", controller.onCreateJob.bind(controller));
 //jobRouter.get("/jobs/:id", controller.onGetJobStatus.bind(controller));
 
-fileRouter.post("/files", async (req, res, next) => {
+fileRouter.post("/files/:id", async (req, res, next) => {
     await controller.onGetFile(req, res, next);
 });
 

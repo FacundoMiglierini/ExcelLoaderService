@@ -21,13 +21,13 @@ export class JobInteractor implements IJobInteractor {
         return job.id;
     }
 
-    async updateJobStatus(id: String, state: String) {
+    async updateJobStatus(id: string, state: string) {
 
         this.repository.updateStatus(id, state);
 
     }
 
-    async getJobStatus(id: String) {
+    async getJobStatus(id: string) {
 
         return this.repository.find(id);
     }

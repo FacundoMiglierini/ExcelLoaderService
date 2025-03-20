@@ -47,12 +47,7 @@ export class FileInteractor implements IFileInteractor {
         */
     }
 
-    async getFile(id: Number) {
-
-        /*
-         * buscar File en DB 
-         * retornar
-         */
+    async getFile(id: string) {
 
         return this.repository.find(id);
     }
