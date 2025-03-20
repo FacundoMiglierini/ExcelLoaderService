@@ -3,6 +3,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 
 import jobRouter from './routes/jobRoutes';
+import fileRouter from './routes/fileRoutes';
 import {server, database} from './config/config';
 
 
@@ -21,7 +22,15 @@ export const Main = async () => {
     console.error(error)
   }
 
+  try {
+    console.log('Connected to RabbitMQ.');
+  } catch (error) {
+    console.log('Unnable to connect to RabbitMQ')
+    console.error(error)
+  }
+
   app.use(jobRouter);
+  app.use(fileRouter);
 
   httpServer = http.createServer(app);
   httpServer.listen(server.SERVER_PORT, () => {

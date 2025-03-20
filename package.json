@@ -11,9 +11,11 @@
     "dev": "concurrently \"tsc --watch\" \"nodemon dist/index.js\""
   },
   "dependencies": {
+    "amqplib": "^0.10.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "mongoose": "^8.12.1"
+    "mongoose": "^8.12.1",
+    "typescript-amqp": "^1.0.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",

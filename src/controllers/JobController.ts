@@ -36,4 +36,20 @@ export class JobController {
             next(error)
         }
     }
+
+
+    async onUpdateJobStatus(req: Request, res: Response, next: NextFunction) {
+        try {
+
+            const id = parseInt(req.params.id);
+            const status = req.params.status;
+
+            const data = await this.interactor.updateJobStatus(id, status);
+
+            return res.status(200).json(data);
+
+        } catch(error) {
+            next(error)
+        }
+    }
 }
