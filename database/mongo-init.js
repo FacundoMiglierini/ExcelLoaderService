@@ -1,2 +1,3 @@
-db.createCollection(process.env.DATABASE_COLLECTION);
+db.createCollection('files');
+db.createCollection('jobs');
 
