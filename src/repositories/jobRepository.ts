@@ -11,7 +11,7 @@ export class JobRepository implements IJobRepository {
         return job;
     }
 
-    async find(id: String): Promise<Job> {
+    async find(id: string): Promise<Job> {
 
         const job = await JobModel.findOne({id: id}).exec();
             
@@ -22,7 +22,7 @@ export class JobRepository implements IJobRepository {
         return job;
     }
 
-    async updateStatus(id: String, status: String): Promise<boolean> {
+    async updateStatus(id: string, status: string): Promise<boolean> {
 
         const res = await JobModel.updateOne({ id: id }, { status: status});
 

@@ -26,9 +26,7 @@ export class JobController {
     async onGetJobStatus(req: Request, res: Response, next: NextFunction) {
         try {
 
-            const id = parseInt(req.params.id);
-
-            const data = await this.interactor.getJobStatus(id);
+            const data = await this.interactor.getJobStatus(req.params.id);
 
             return res.status(200).json(data);
 
