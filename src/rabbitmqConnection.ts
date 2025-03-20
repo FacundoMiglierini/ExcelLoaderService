@@ -83,10 +83,7 @@ async function publish(data: any) {
 async function consume() {
 
     const fileRepository = new FileRepository();
-    const fileInteractor = new FileInteractor(fileRepository);
-
-    //const jobRepository = new JobRepository();
-    //const jobInteractor = new JobInteractor(jobRepository);
+    const jobRepository = new JobRepository();
 
     const amqp = new Amqp();
     const connection = await amqp.connect('amqp://guest:guest@localhost:5672'); //TODO move credentials to.env
@@ -110,9 +107,10 @@ async function consume() {
       if (data.content) {
 
           /*
-          jobInteractor.updateState(id, 'processing');
-          fileInteractor.uploadFile(schema, file_data);
-          jobInteractor.updateState(id, 'done');
+          jobRepository.updateStatus(id, 'processing');
+          const file = processFile(schema, file_data);
+          fileRepository.create(file);
+          jobRepository.updateStatus(id, 'done');
           */
 
         console.log(` [x] ${data.content.toString()}`);

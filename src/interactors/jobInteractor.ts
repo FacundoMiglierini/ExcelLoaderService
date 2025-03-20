@@ -14,7 +14,7 @@ export class JobInteractor implements IJobInteractor {
 
     async createJob(input: any) {
         const jobDoc = new JobModel({
-            id: 16,
+            id: 17,
             state: 'pending',
             job_errors: [],
             file_id: ''
@@ -23,7 +23,7 @@ export class JobInteractor implements IJobInteractor {
         const job = await this.repository.create(jobDoc);
         const jobId = job!.id 
 
-        publish({input: input, jobId: jobId});
+        await publish({input: input, jobId: jobId});
 
         return jobId;
     }
