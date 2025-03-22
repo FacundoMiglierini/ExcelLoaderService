@@ -45,17 +45,18 @@ function processFile (job: Job) {
 
         const newRow: any = {}
         const rowErrors: { row: number; col: number}[] = []
-        
-        row.forEach((cell: any, colIndex: number) => {
+
+        for (let i = 0; i < processedSchema.length; i++) {
             try {
-                if (cell === null && !processedSchema[colIndex]["nullable"]) {
+                const cell = row[i]
+                if (cell === null && !processedSchema[i]["nullable"]) {
                     throw new Error("Null cell within not nullable column.") 
                 } else {
                     var formattedCell;
                     if (cell === null) {
-                        return;
+                        continue;
                     } else {
-                        switch (processedSchema[colIndex]["dataType"]) {
+                        switch (processedSchema[i]["dataType"]) {
                             case DataTypes.STRING:
                                 if (isNumber(cell) || isNumberList(cell)) {
                                     throw new Error(`Cannot convert '${cell}' to a String: it is a Number or Array<Number>.`);
@@ -77,15 +78,15 @@ function processFile (job: Job) {
                                 break;
                         }
                     }
-                    newRow[processedSchema[colIndex]["column"]] = formattedCell
+                    newRow[processedSchema[i]["column"]] = formattedCell
                 }
             } catch (error) {
                 rowErrors.push({
                     row: rowIndex + 1,
-                    col: colIndex + 1
+                    col: i + 1
                 })
             }
-        })
+        }
 
         if (rowErrors.length === 0)
             processedFile.push(newRow)
