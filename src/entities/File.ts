@@ -9,7 +9,6 @@ export const fileSchema = new Schema<File>({
             unique: true,
             required: true,
         },
-        schema: { type: Object },
         data: { type: Object },
         job_id: { 
             type: String,

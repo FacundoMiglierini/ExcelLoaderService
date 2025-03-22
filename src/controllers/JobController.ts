@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { IJobInteractor } from "../interfaces/IJobInteractor";
+import XLSX from 'xlsx';
+import Excel from 'exceljs';
 
 export class JobController {
 
@@ -11,10 +13,38 @@ export class JobController {
 
     async onCreateJob(req: Request, res: Response, next: NextFunction) {
         try {
+            const { file_content, file_schema } = req.files as { [key: string]: Express.Multer.File[] };
 
-            const body = req.body;
+            // Process Excel
+            const excelBuffer = file_content[0]?.buffer;
+            const workbook = XLSX.read(excelBuffer);
+            const sheetName = workbook.SheetNames[0];
+            const excelData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
+              header: 1,
+              raw: true,
+              blankrows: true,
+              defval: null,
+              rawNumbers: true
+            });
 
-            const data = await this.interactor.createJob(body);
+            //const workbook = new Excel.Workbook();
+            //const content = await workbook.xlsx.read(file_content[0]?.buffer);
+
+            console.log("EXCEL DATA:")
+            console.log(excelData)
+
+            // Process JSON
+            const jsonBuffer = file_schema[0]?.buffer;
+            const schema = JSON.parse(jsonBuffer.toString());
+            
+            console.log("SCHEMA:")
+            console.log(schema)
+
+            if (!excelData || !schema) {
+                throw new Error('Missing required fields: file_data and format');
+            }
+
+            const data = await this.interactor.createJob(excelData, schema);
 
             return res.status(200).json(data);
 

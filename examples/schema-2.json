@@ -1,0 +1,5 @@
+{
+    "age": "Number", 
+    "name": "String", 
+    "nums?": "Array<Number>"
+}

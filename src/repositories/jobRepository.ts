@@ -54,4 +54,16 @@ export class JobRepository implements IJobRepository {
         return res.acknowledged;
     }
 
+
+    async updateFileRef(id: string, file_id: string): Promise<boolean> {
+       
+        const res = await JobModel.updateOne({ id: id }, { file_id: file_id});
+
+        if (!res.acknowledged) {
+            throw new Error(`Job with ID ${id} not found.`);
+        }
+
+        return res.acknowledged;
+    }
+
 }

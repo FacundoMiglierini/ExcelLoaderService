@@ -11,13 +11,9 @@ export class FileController {
 
     async onGetFile(req: Request, res: Response, next: NextFunction) {
         try {
-
-            const id = parseInt(req.params.id);
-
-            const data = await this.interactor.getFile(id);
+            const data = await this.interactor.getFile(req.params.id);
 
             return res.status(200).json(data);
-
         } catch(error) {
             next(error)
         }
