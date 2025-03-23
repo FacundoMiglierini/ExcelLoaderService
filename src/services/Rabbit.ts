@@ -28,6 +28,8 @@ async function consume() {
 
     const fileRepository = new FileRepository(); //TODO manage this repos another way
     const jobRepository = new JobRepository();
+    const fileInteractor = new FileInteractor(fileRepository);
+    const jobInteractor = new JobInteractor(jobRepository);
 
     const amqp = new Amqp();
     const connection = await amqp.connect(broker.URI); 
@@ -48,18 +50,16 @@ async function consume() {
     channel.consume(queue.queue, async (msg: any) => {
       if (msg.content) {
           const jobId = msg.content.toString()
-          const job = await jobRepository.find(jobId,1,10)
+          const job = await jobRepository.find(jobId)
 
-          if (!job){
+          if (!job)
               throw new Error("File Upload process not found.");
-          }
 
           await jobRepository.updateStatus(job.id, JobStatus.PROCESSING);
           const file = processFile(job);
 
-          if (job.job_errors.length > 0) {
+          if (job.job_errors.length > 0) 
             await jobRepository.updateErrors(job.id, job.job_errors);
-          }
 
           await fileRepository.create(file);
           await jobRepository.updateStatus(job.id, JobStatus.DONE);

@@ -11,15 +11,16 @@ export class JobRepository implements IJobRepository {
         return job;
     }
 
-    async find(id: string, page: number, limit: number): Promise<Job> {
-
+    async find(id: string, page?: number, limit?: number): Promise<Job> {
         const query = JobModel.findOne({ id });
           
-        query.select({
-          job_errors: {
-            $slice: [page - 1, limit]
-          }
-        });
+        if (page !== undefined && limit !== undefined) {
+            query.select({
+              job_errors: {
+                $slice: [page - 1, limit]
+              }
+            });
+        }
 
         const job = await query.exec();
 
