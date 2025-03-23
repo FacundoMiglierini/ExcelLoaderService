@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { IJobInteractor } from "../interfaces/IJobInteractor";
 import XLSX from 'xlsx';
-import Excel from 'exceljs';
 
 export class JobController {
 
@@ -26,9 +25,6 @@ export class JobController {
               defval: null,
               rawNumbers: true
             });
-
-            //const workbook = new Excel.Workbook();
-            //const content = await workbook.xlsx.read(file_content[0]?.buffer);
 
             console.log("EXCEL DATA:")
             console.log(excelData)

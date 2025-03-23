@@ -4,6 +4,7 @@ import multer from 'multer';
 import { JobController } from '../controllers/JobController';
 import { JobRepository } from '../repositories/jobRepository';
 import { JobInteractor} from '../interactors/jobInteractor';
+import { Authenticate } from '../middleware/auth';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -15,6 +16,8 @@ const interactor = new JobInteractor(repository);
 const controller = new JobController(interactor);
 
 const jobRouter = express.Router();
+//@ts-ignore
+jobRouter.use(Authenticate)
 
 jobRouter.post("/jobs", upload.fields([
   { name: 'file_content', maxCount: 1 },

@@ -17,6 +17,8 @@ export const DATABASE_OPTIONS: mongoose.ConnectOptions = { retryWrites: true, w:
 export const SERVER_HOSTNAME = process.env.SERVER_HOSTNAME || 'localhost';
 export const SERVER_PORT = process.env.SERVER_PORT ? Number(process.env.SERVER_PORT) : 9000;
 
+export const APP_SECRET = process.env.APP_SECRET || 'default';
+
 export const database = {
     DATABASE_USERNAME,
     DATABASE_PASSWORD,
@@ -33,4 +35,6 @@ export const server = {
     SERVER_PORT
 }
 
-
+export const permissions = {
+    APP_SECRET: APP_SECRET
+}
