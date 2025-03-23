@@ -51,24 +51,11 @@ export class JobController {
 
     async onGetJobStatus(req: Request, res: Response, next: NextFunction) {
         try {
-
-            const data = await this.interactor.getJobStatus(req.params.id);
-
-            return res.status(200).json(data);
-
-        } catch(error) {
-            next(error)
-        }
-    }
-
-
-    async onUpdateJobStatus(req: Request, res: Response, next: NextFunction) {
-        try {
-
-            const data = await this.interactor.updateJobStatus(req.params.id, req.params.status);
+            const jobId = req.params.id
+            const pagination: { offset?: number; limit?: number } = JSON.parse(req.params.pagination)
+            const data = await this.interactor.getJobStatus(jobId, pagination);
 
             return res.status(200).json(data);
-
         } catch(error) {
             next(error)
         }

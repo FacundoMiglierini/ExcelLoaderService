@@ -28,8 +28,5 @@ jobRouter.post("/jobs", upload.fields([
 jobRouter.get("/jobs/:id", async (req, res, next) => {
     await controller.onGetJobStatus(req, res, next);
 });
-jobRouter.patch("/jobs/:id", async (req, res, next) => {
-    await controller.onUpdateJobStatus(req, res, next);
-});
 
 export default jobRouter;

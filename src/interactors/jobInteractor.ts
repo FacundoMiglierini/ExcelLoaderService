@@ -32,7 +32,6 @@ export class JobInteractor implements IJobInteractor {
 
     }
 
-    //TODO rename as getJob
     async getJobStatus(id: string, pagination?: { offset?: number; limit?: number }) {
 
         return this.repository.find(id, pagination);
