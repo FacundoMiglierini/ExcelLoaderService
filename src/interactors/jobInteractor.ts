@@ -1,7 +1,7 @@
 import { JobModel } from "../entities/Job";
 import { IJobInteractor } from "../interfaces/IJobInteractor";
 import { IJobRepository } from "../interfaces/IJobRepository";
-import { publish } from "../rabbitmqConnection";
+import { publish } from "../services/Rabbit";
 
 export class JobInteractor implements IJobInteractor {
 

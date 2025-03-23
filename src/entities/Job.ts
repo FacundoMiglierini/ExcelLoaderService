@@ -1,5 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import { v4 as uuidv4 } from "uuid";
+
 import { Job } from "../interfaces/IJob";
 import JobStatus from "../enums/Job";
 
@@ -33,7 +34,7 @@ export const jobSchema = new Schema<Job>({
             ref: 'File', 
         },
     },{
-        timestamps: true // Enable timestamps here
+        timestamps: true 
     }
 );
 
