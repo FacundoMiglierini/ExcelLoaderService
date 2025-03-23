@@ -32,9 +32,15 @@ export class JobInteractor implements IJobInteractor {
 
     }
 
-    async getJobStatus(id: string, pagination?: { offset?: number; limit?: number }) {
+    async getJobStatus(id: string, page: number, limit: number ) {
 
-        return this.repository.find(id, pagination);
+        const job = await this.repository.find(id, page, limit);
+
+        return {
+            status: job.status,
+            ...(job.file_id !== null && { file_id: job.file_id }),
+            errors: job.job_errors,
+        }
     }
 
 }

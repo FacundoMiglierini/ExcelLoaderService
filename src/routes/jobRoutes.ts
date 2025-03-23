@@ -21,7 +21,6 @@ jobRouter.use(Authenticate)
 
 jobRouter.post("/jobs", upload.fields([
   { name: 'file_content', maxCount: 1 },
-  { name: 'file_schema', maxCount: 1 }
 ]), async (req, res, next) => {
     await controller.onCreateJob(req, res, next);
 });

@@ -12,7 +12,7 @@ export class JobController {
 
     async onCreateJob(req: Request, res: Response, next: NextFunction) {
         try {
-            const { file_content, file_schema } = req.files as { [key: string]: Express.Multer.File[] };
+            const { file_content } = req.files as { [key: string]: Express.Multer.File[] };
 
             // Process Excel
             const excelBuffer = file_content[0]?.buffer;
@@ -30,8 +30,7 @@ export class JobController {
             console.log(excelData)
 
             // Process JSON
-            const jsonBuffer = file_schema[0]?.buffer;
-            const schema = JSON.parse(jsonBuffer.toString());
+            const schema = JSON.parse(req.body.file_schema.toString());
             
             console.log("SCHEMA:")
             console.log(schema)
@@ -40,9 +39,9 @@ export class JobController {
                 throw new Error('Missing required fields: file_data and format');
             }
 
-            const data = await this.interactor.createJob(excelData, schema);
+            const jobId = await this.interactor.createJob(excelData, schema);
 
-            return res.status(200).json(data);
+            return res.status(200).json({"job_id": jobId});
 
         } catch(error) {
             next(error)
@@ -52,8 +51,19 @@ export class JobController {
     async onGetJobStatus(req: Request, res: Response, next: NextFunction) {
         try {
             const jobId = req.params.id
-            const pagination: { offset?: number; limit?: number } = JSON.parse(req.params.pagination)
-            const data = await this.interactor.getJobStatus(jobId, pagination);
+
+            const { page = 1, limit = 10 } = req.query;
+
+            // Ensure page and limit are integers
+            const pageNumber = parseInt(page as string);
+            const limitNumber = parseInt(limit as string);
+
+            // Validate pagination parameters
+            if (isNaN(pageNumber) || isNaN(limitNumber) || pageNumber < 1 || limitNumber < 1) {
+                return res.status(400).send("Invalid pagination parameters");
+            }
+
+            const data = await this.interactor.getJobStatus(jobId, pageNumber, limitNumber);
 
             return res.status(200).json(data);
         } catch(error) {

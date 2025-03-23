@@ -1,25 +1,25 @@
 import { Amqp } from 'typescript-amqp';
-import { FileInteractor } from './interactors/fileInteractor';
-import { JobInteractor } from './interactors/jobInteractor';
-import { JobRepository } from './repositories/jobRepository';
-import { FileRepository } from './repositories/fileRepository';
-import JobStatus from './enums/Job';
-import processFile from './utils/fileProcessing';
+import { FileInteractor } from '../interactors/fileInteractor';
+import { JobInteractor } from '../interactors/jobInteractor';
+import { JobRepository } from '../repositories/jobRepository';
+import { FileRepository } from '../repositories/fileRepository';
+import JobStatus from '../enums/Job';
+import processFile from '../utils/fileProcessing';
+import { broker } from '../config/config';
 
 
 async function publish(id: string) {
 
     const amqp = new Amqp();
-    const connection = await amqp.connect('amqp://guest:guest@localhost:5672'); //TODO move credentials to.env
-    const exchange = "excel"
+    const connection = await amqp.connect(broker.URI); 
    
     const channel = await connection.createChannel()
-    await channel.assertExchange(exchange, 'fanout', {
+    await channel.assertExchange(broker.BROKER_EXCHANGE, 'fanout', {
       durable: false
     });
 
     console.log(`Msg with content: ${id} published.`)
-    await channel.publish(exchange, '', Buffer.from(id));
+    await channel.publish(broker.BROKER_EXCHANGE, '', Buffer.from(id));
 }
 
 
@@ -30,11 +30,10 @@ async function consume() {
     const jobRepository = new JobRepository();
 
     const amqp = new Amqp();
-    const connection = await amqp.connect('amqp://guest:guest@localhost:5672'); //TODO move credentials to.env
-    const exchange = "excel"
+    const connection = await amqp.connect(broker.URI); 
    
     const channel = await connection.createChannel()
-    await channel.assertExchange(exchange, 'fanout', {
+    await channel.assertExchange(broker.BROKER_EXCHANGE, 'fanout', {
       durable: false
     });
 
@@ -44,12 +43,12 @@ async function consume() {
 
     console.log(` [*] Waiting for messages in ${queue.queue}. To exit press CTRL+C`);
 
-    await channel.bindQueue(queue.queue, exchange, '');
+    await channel.bindQueue(queue.queue, broker.BROKER_EXCHANGE, '');
 
     channel.consume(queue.queue, async (msg: any) => {
       if (msg.content) {
           const jobId = msg.content.toString()
-          const job = await jobRepository.find(jobId)
+          const job = await jobRepository.find(jobId,1,10)
 
           if (!job){
               throw new Error("File Upload process not found.");
