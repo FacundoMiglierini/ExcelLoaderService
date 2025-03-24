@@ -29,7 +29,6 @@ export class UploadFileUseCase implements IUploadFileUseCase {
         });
         const job = await this.jobRepository.create(jobDoc);
         console.log(`New job with id ${jobDoc.id} created.`)
-
         await publish(job.id);
 
         return job.id;
@@ -76,11 +75,8 @@ export class UploadFileUseCase implements IUploadFileUseCase {
 
         const format: any = job.schema 
         const raw_data: any = job.raw_data
-
         const processedSchema: { column: string, nullable: boolean, dataType: string }[] = []
-
         this.validateSchema(format, processedSchema)
-
         const processedFile: typeof processedSchema[] = []
         const totalErrors: { row: number; col: number}[] = []
 
@@ -134,17 +130,10 @@ export class UploadFileUseCase implements IUploadFileUseCase {
             totalErrors.push(...rowErrors);
         });
 
-        //console.log("PROCESSED FILE:")
-        //console.log(processedFile)
-
-        //console.log("ERRORS:")
-        //console.log(totalErrors)
-
         const newFile: File = new FileModel({
             data: processedFile, 
             job_id: job.id,
         })
-
         job.job_errors = totalErrors
         job.file_id = newFile.id
 
