@@ -98,7 +98,7 @@ export class JobRepository implements IJobRepository {
 
     async updateErrors(id: string, errors: Object): Promise<boolean> {
        
-        const res = await JobModel.updateOne({ id: id }, { $push: { job_errors: errors } });
+        const res = await JobModel.updateOne({ id: id }, { $push: { job_errors: { $each: errors } } });
 
         if (!res.acknowledged) {
             const error: any = new Error("Job not found");
