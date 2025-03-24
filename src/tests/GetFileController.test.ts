@@ -1,6 +1,6 @@
 import request from "supertest";
-import { GetFileController } from "../src/controllers/GetFileController";
-import { IGetFileUseCase } from "../src/interfaces/IGetFileUseCase";
+import { GetFileController } from "../controllers/GetFileController";
+import { IGetFileUseCase } from "../interfaces/IGetFileUseCase";
 import express from "express";
 
 const mockContent = [{

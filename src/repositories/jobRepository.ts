@@ -11,13 +11,14 @@ export class JobRepository implements IJobRepository {
         return job;
     }
 
-    async find(id: string, page?: number, limit?: number): Promise<Job> {
+    async findStatus(id: string, page?: number, limit?: number): Promise<Job> {
         const query = JobModel.findOne({ id });
           
         if (page !== undefined && limit !== undefined) {
+            const skip = (page - 1) * limit;
             query.select({
               job_errors: {
-                $slice: [page - 1, limit]
+                $slice: [skip, limit]
               }
             });
         }
@@ -31,6 +32,55 @@ export class JobRepository implements IJobRepository {
         }
 
         return job;
+    }
+
+
+    async findSchema(id: string): Promise<Object> {
+        const query = JobModel.findOne({ id });
+        query.select('schema'); 
+        const schema = await query.exec();
+
+        if (!schema) {
+            const error: any = new Error("Schema not found");
+            error.name = "NotFoundError"; 
+            throw error;
+        }
+
+        return schema.schema;
+    }
+
+    async findRawDataLength(id: string): Promise<number> {
+        const query = JobModel.findOne({ id });
+        query.select('raw_data_length'); 
+        const length = await query.exec();
+
+        if (!length) {
+            const error: any = new Error("Raw data length not found.");
+            error.name = "NotFoundError"; 
+            throw error;
+        }
+
+        return length.raw_data_length;
+    }
+
+    async findRawData(id: string, page: number, limit: number): Promise<Object> {
+        const query = JobModel.findOne({ id });
+          
+        query.select({
+          raw_data: {
+            $slice: [page - 1, limit]
+          }
+        });
+
+        const job = await query.exec();
+
+        if (!job) {
+            const error: any = new Error("Job not found");
+            error.name = "NotFoundError"; 
+            throw error;
+        }
+
+        return job.raw_data;
     }
 
     async updateStatus(id: string, status: string): Promise<boolean> {
@@ -48,7 +98,7 @@ export class JobRepository implements IJobRepository {
 
     async updateErrors(id: string, errors: Object): Promise<boolean> {
        
-        const res = await JobModel.updateOne({ id: id }, { job_errors: errors});
+        const res = await JobModel.updateOne({ id: id }, { $push: { job_errors: errors } });
 
         if (!res.acknowledged) {
             const error: any = new Error("Job not found");
@@ -58,7 +108,6 @@ export class JobRepository implements IJobRepository {
 
         return res.acknowledged;
     }
-
 
     async updateFileRef(id: string, file_id: string): Promise<boolean> {
        

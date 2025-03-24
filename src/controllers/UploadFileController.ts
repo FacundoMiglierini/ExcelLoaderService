@@ -26,7 +26,7 @@ export class UploadFileController {
               blankrows: true,
               defval: null,
               rawNumbers: true
-            });
+            }).slice(1);
 
             // Process schema
             const schema = JSON.parse(req.body.file_schema.toString());
@@ -37,7 +37,7 @@ export class UploadFileController {
                 throw error;
             }
 
-            const jobId = await this.useCase.createJob(excelData, schema);
+            const jobId = await this.useCase.createJob(excelData, excelData.length, schema);
 
             return res.status(202).json({"job_id": jobId});
 

@@ -1,8 +1,8 @@
 import request from "supertest";
 import express from "express";
-import { GetJobStatusController } from "../src/controllers/GetJobStatusController";
-import { IGetJobStatusUseCase } from "../src/interfaces/IGetJobStatusUseCase";
-import JobStatus from "../src/enums/Job";
+import { GetJobStatusController } from "../controllers/GetJobStatusController";
+import { IGetJobStatusUseCase } from "../interfaces/IGetJobStatusUseCase";
+import JobStatus from "../enums/Job";
 
 
 const mockJob = {

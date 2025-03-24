@@ -1,9 +1,9 @@
 import request from 'supertest';
 import express from 'express';
-import { Authenticate } from '../src/middleware/auth';
-import { ValidateSignature } from '../src/utils/authUtils';
+import { Authenticate } from '../middleware/auth';
+import { ValidateSignature } from '../utils/authUtils';
 
-jest.mock('../src/utils/authUtils', () => ({
+jest.mock('../utils/authUtils', () => ({
   ValidateSignature: jest.fn(),
 }));
 

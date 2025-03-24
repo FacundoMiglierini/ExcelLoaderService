@@ -1,8 +1,8 @@
 import request from "supertest";
 import express from "express";
 import multer from "multer";
-import { UploadFileController } from "../src/controllers/UploadFileController";
-import { IUploadFileUseCase } from "../src/interfaces/IUploadFileUseCase";
+import { UploadFileController } from "../controllers/UploadFileController";
+import { IUploadFileUseCase } from "../interfaces/IUploadFileUseCase";
 
 
 // Mock the IUploadFileUseCase
