@@ -14,8 +14,8 @@ const getJobStatusRouter = express.Router();
 //@ts-ignore
 getJobStatusRouter.use(Authenticate)
 
-getJobStatusRouter.get("/jobs/:id", async (req, res, next) => {
-    await controller.onGetJobStatus(req, res, next);
+getJobStatusRouter.get("/jobs/:id", async (req, res) => {
+    await controller.onGetJobStatus(req, res);
 });
 
 export default getJobStatusRouter;
