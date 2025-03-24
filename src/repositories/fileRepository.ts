@@ -14,9 +14,10 @@ export class FileRepository implements IFileRepository {
         const query = FileModel.findOne({id: id});
 
         if (page !== undefined && limit !== undefined) {
+            const skip = (page - 1) * limit;
             query.select({
               data: {
-                $slice: [page - 1, limit]
+                $slice: [skip, limit]
               }
             });
         }
@@ -34,7 +35,7 @@ export class FileRepository implements IFileRepository {
 
     async updateContent(id: string, content: any): Promise<boolean> {
 
-        const res = await FileModel.updateOne({ id: id }, { $push: { data: content } });
+        const res = await FileModel.updateOne({ id: id }, { $push: { data: { $each: content } } });
 
         if (!res.acknowledged) {
             const error: any = new Error("File not found");

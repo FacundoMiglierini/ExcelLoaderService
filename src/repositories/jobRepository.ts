@@ -15,9 +15,10 @@ export class JobRepository implements IJobRepository {
         const query = JobModel.findOne({ id });
           
         if (page !== undefined && limit !== undefined) {
+            const skip = (page - 1) * limit;
             query.select({
               job_errors: {
-                $slice: [page - 1, limit]
+                $slice: [skip, limit]
               }
             });
         }

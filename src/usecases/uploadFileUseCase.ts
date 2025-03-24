@@ -125,9 +125,7 @@ export class UploadFileUseCase implements IUploadFileUseCase {
         const data_length = await this.jobRepository.findRawDataLength(jobId);
 
         const batchSize = 2048
-        const batches = Math.ceil((data_length - 1) / batchSize);
-
-        //TODO ignore first row
+        const batches = Math.ceil(data_length / batchSize);
 
         for (let batchIndex = 0; batchIndex < batches; batchIndex++) {
 
