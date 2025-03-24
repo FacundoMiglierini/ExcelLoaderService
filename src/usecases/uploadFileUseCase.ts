@@ -7,7 +7,7 @@ import { FileModel } from "../entities/File";
 import { JobModel } from "../entities/Job";
 import DataTypes from "../enums/DataTypes";
 import JobStatus from "../enums/Job";
-import { publish } from "../services/rabbitPublisher";
+import { publish } from "../services/Publisher";
 import { isNumber, isNumberList } from "../utils/fileProcessingUtils";
 
 
@@ -60,10 +60,8 @@ export class UploadFileUseCase implements IUploadFileUseCase {
             if (typeof key !== "string") 
                 throw new Error("Incompatible file schema: column names must be strings.")
 
-            // Normalización del nombre de columna
             const isNullable = key.toString().endsWith("?");
             const columnName = isNullable ? key.toString().slice(0, -1) : key.toString();
-            // Extracción del tipo de dato
             const dataType = value.toLowerCase();
 
             processedSchema.push({
