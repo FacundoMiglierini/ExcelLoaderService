@@ -8,7 +8,7 @@ export const Authenticate = async (req: Request, res: Response, next: NextFuncti
         if (isValid) {
             return next();
         } else {
-            return res.status(401).send({ message: 'Not authorised' });
+            return res.status(401).send({ message: 'Not authorized' });
         }
     } catch (err) {
         if (err instanceof Error) {
