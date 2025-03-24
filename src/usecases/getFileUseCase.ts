@@ -13,12 +13,6 @@ export class GetFileUseCase implements IGetFileUseCase {
     async getFile(id: string) {
         const file = await this.repository.find(id);
 
-        if (!file) {
-            const error: any = new Error("File not found");
-            error.name = "NotFoundError"; 
-            throw error;
-        }
-
         return {
             id: file.id,
             job_id: file.job_id,

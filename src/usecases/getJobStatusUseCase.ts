@@ -13,12 +13,6 @@ export class GetJobStatusUseCase implements IGetJobStatusUseCase {
 
         const job = await this.repository.find(id, page, limit);
 
-        if (!job) {
-            const error: any = new Error("Job not found");
-            error.name = "NotFoundError"; 
-            throw error;
-        }
-
         return {
             id: job.id,
             status: job.status,

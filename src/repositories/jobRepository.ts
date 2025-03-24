@@ -25,7 +25,9 @@ export class JobRepository implements IJobRepository {
         const job = await query.exec();
 
         if (!job) {
-            throw new Error(`Job with ID ${id} not found.`);
+            const error: any = new Error("Job not found");
+            error.name = "NotFoundError"; 
+            throw error;
         }
 
         return job;
@@ -36,7 +38,9 @@ export class JobRepository implements IJobRepository {
         const res = await JobModel.updateOne({ id }, { status: status});
 
         if (!res.acknowledged) {
-            throw new Error(`Job with ID ${id} not found.`);
+            const error: any = new Error("Job not found");
+            error.name = "NotFoundError"; 
+            throw error;
         }
 
         return res.acknowledged;
@@ -47,7 +51,9 @@ export class JobRepository implements IJobRepository {
         const res = await JobModel.updateOne({ id: id }, { job_errors: errors});
 
         if (!res.acknowledged) {
-            throw new Error(`Job with ID ${id} not found.`);
+            const error: any = new Error("Job not found");
+            error.name = "NotFoundError"; 
+            throw error;
         }
 
         return res.acknowledged;
@@ -59,7 +65,9 @@ export class JobRepository implements IJobRepository {
         const res = await JobModel.updateOne({ id: id }, { file_id: file_id});
 
         if (!res.acknowledged) {
-            throw new Error(`Job with ID ${id} not found.`);
+            const error: any = new Error("Job not found");
+            error.name = "NotFoundError"; 
+            throw error;
         }
 
         return res.acknowledged;

@@ -28,15 +28,9 @@ export class UploadFileController {
               rawNumbers: true
             });
 
-            console.debug("EXCEL DATA:")
-            console.debug(excelData)
-
             // Process schema
             const schema = JSON.parse(req.body.file_schema.toString());
             
-            console.debug("SCHEMA:")
-            console.debug(schema)
-
             if (!excelData || !schema) {
                 const error: any = new Error("Missing required fields: file_data and/or file_schema");
                 error.name = "MissingFieldError"; 
