@@ -14,7 +14,9 @@ export class FileRepository implements IFileRepository {
         const file = await FileModel.findOne({id: id}).exec();
             
         if (!file) {
-            throw new Error(`File with ID ${id} not found.`);
+            const error: any = new Error("File not found");
+            error.name = "NotFoundError"; 
+            throw error;
         }
 
         return file;

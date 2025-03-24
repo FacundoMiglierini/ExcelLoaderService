@@ -9,7 +9,7 @@ import dbConnection from './services/Database';
 import brokerConsumerConnection from './services/Consumer';
 
 
-const app: express.Application = express();
+export const app: express.Application = express();
 export let httpServer: ReturnType<typeof http.createServer>;
 
 export const Main = async () => {
