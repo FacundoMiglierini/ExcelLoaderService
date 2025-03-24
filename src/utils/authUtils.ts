@@ -7,6 +7,7 @@ import { permissions } from "../config/config";
 
 export const ValidateSignature = async (req: Request) => {
     const authHeader = req.get('Authorization');
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         throw new Error('Access denied. No token provided.');
     }

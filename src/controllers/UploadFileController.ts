@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 import XLSX from 'xlsx';
 
 import { IUploadFileUseCase } from "../interfaces/IUploadFileUseCase";
@@ -12,7 +12,7 @@ export class UploadFileController {
         this.useCase = useCase;
     }
 
-    async onCreateJob(req: Request, res: Response, next: NextFunction) {
+    async onCreateJob(req: Request, res: Response) {
         try {
             const { file_content } = req.files as { [key: string]: Express.Multer.File[] };
 
@@ -28,25 +28,30 @@ export class UploadFileController {
               rawNumbers: true
             });
 
-            console.log("EXCEL DATA:")
-            console.log(excelData)
+            console.debug("EXCEL DATA:")
+            console.debug(excelData)
 
-            // Process JSON
+            // Process schema
             const schema = JSON.parse(req.body.file_schema.toString());
             
-            console.log("SCHEMA:")
-            console.log(schema)
+            console.debug("SCHEMA:")
+            console.debug(schema)
 
             if (!excelData || !schema) {
-                throw new Error('Missing required fields: file_data and format');
+                const error: any = new Error("Missing required fields: file_data and/or file_schema");
+                error.name = "MissingFieldError"; 
+                throw error;
             }
 
             const jobId = await this.useCase.createJob(excelData, schema);
 
-            return res.status(200).json({"job_id": jobId});
+            return res.status(202).json({"job_id": jobId});
 
-        } catch(error) {
-            next(error)
+        } catch(error: any) {
+            if (error.name === "MissingFieldError") {
+                return res.status(400).json({ message: error.message });
+            }
+            return res.status(500).json({ message: "Internal Server Error" });
         }
     }
 

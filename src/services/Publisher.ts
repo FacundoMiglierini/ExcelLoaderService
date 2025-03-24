@@ -6,13 +6,12 @@ async function publish(id: string) {
 
     const amqp = new Amqp();
     const connection = await amqp.connect(broker.URI); 
-
     const channel = await connection.createChannel()
     await channel.assertExchange(broker.BROKER_EXCHANGE, 'fanout', {
       durable: false
     });
 
-    console.log(`Msg with content: ${id} published.`)
+    console.debug(`Msg published.`)
     await channel.publish(broker.BROKER_EXCHANGE, '', Buffer.from(id));
 }
 

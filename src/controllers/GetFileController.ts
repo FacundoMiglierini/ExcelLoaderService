@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 import { IGetFileUseCase } from "../interfaces/IGetFileUseCase"; 
 
 export class GetFileController {
@@ -9,13 +9,16 @@ export class GetFileController {
         this.useCase = useCase;
     }
 
-    async onGetFile(req: Request, res: Response, next: NextFunction) {
+    async onGetFile(req: Request, res: Response) {
         try {
             const data = await this.useCase.getFile(req.params.id);
 
             return res.status(200).json(data);
-        } catch(error) {
-            next(error)
+        } catch(error: any) {
+            if (error.name === "NotFoundError") {
+                return res.status(404).json({ message: error.message });
+            }
+            return res.status(500).json({ message: "Internal Server Error" });
         }
     }
 }

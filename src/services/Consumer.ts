@@ -36,7 +36,7 @@ export default async function brokerConsumerConnection() {
             noAck: false
         });
     } catch (error) {
-        console.error("Error during consume operation: ", error)
+        console.error("Error in RabbitMQ consumer connection: ", error)
     }
 
 }
