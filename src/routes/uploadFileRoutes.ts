@@ -23,8 +23,8 @@ uploadFileRouter.use(Authenticate)
 
 uploadFileRouter.post("/file", upload.fields([
   { name: 'file_content', maxCount: 1 },
-]), async (req, res, next) => {
-    await controller.onCreateJob(req, res, next);
+]), async (req, res) => {
+    await controller.onCreateJob(req, res);
 });
 
 export default uploadFileRouter;

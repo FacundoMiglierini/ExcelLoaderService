@@ -13,8 +13,8 @@ const getFileRouter = express.Router();
 //@ts-ignore
 getFileRouter.use(Authenticate)
 
-getFileRouter.get("/files/:id", async (req, res, next) => {
-    await controller.onGetFile(req, res, next);
+getFileRouter.get("/files/:id", async (req, res) => {
+    await controller.onGetFile(req, res);
 });
 
 export default getFileRouter;
