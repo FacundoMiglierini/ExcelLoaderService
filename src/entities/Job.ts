@@ -24,6 +24,10 @@ export const jobSchema = new Schema<Job>({
             required: true,
         },
         schema: { type: Object },
+        raw_data_length: {
+            type: Number, 
+            default: 0
+        },
         raw_data: { type: Object },
         job_errors: {
             type: [jobErrorSchema], 

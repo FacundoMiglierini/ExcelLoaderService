@@ -37,7 +37,7 @@ export class UploadFileController {
                 throw error;
             }
 
-            const jobId = await this.useCase.createJob(excelData, schema);
+            const jobId = await this.useCase.createJob(excelData, excelData.length, schema);
 
             return res.status(202).json({"job_id": jobId});
 

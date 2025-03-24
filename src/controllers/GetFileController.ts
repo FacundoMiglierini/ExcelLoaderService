@@ -11,7 +11,16 @@ export class GetFileController {
 
     async onGetFile(req: Request, res: Response) {
         try {
-            const data = await this.useCase.getFile(req.params.id);
+            const fileId = req.params.id
+            const { page = 1, limit = 10 } = req.query;
+            const pageNumber = parseInt(page as string);
+            const limitNumber = parseInt(limit as string);
+
+            if (isNaN(pageNumber) || isNaN(limitNumber) || pageNumber < 1 || limitNumber < 1) {
+                return res.status(400).send("Invalid pagination parameters");
+            }
+
+            const data = await this.useCase.getFile(fileId, pageNumber, limitNumber);
 
             return res.status(200).json(data);
         } catch(error: any) {

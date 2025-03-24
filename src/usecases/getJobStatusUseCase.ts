@@ -11,7 +11,7 @@ export class GetJobStatusUseCase implements IGetJobStatusUseCase {
 
     async getJobStatus(id: string, page: number, limit: number ) {
 
-        const job = await this.repository.find(id, page, limit);
+        const job = await this.repository.findStatus(id, page, limit);
 
         return {
             id: job.id,

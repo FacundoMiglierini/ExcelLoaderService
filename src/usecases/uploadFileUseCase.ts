@@ -1,7 +1,6 @@
 import { IFileRepository } from "../interfaces/IFileRepository";
 import { IJobRepository } from "../interfaces/IJobRepository";
 import { IUploadFileUseCase } from "../interfaces/IUploadFileUseCase";
-import { Job } from "../interfaces/IJob";
 import { File } from "../interfaces/IFile";
 import { FileModel } from "../entities/File";
 import { JobModel } from "../entities/Job";
@@ -21,11 +20,12 @@ export class UploadFileUseCase implements IUploadFileUseCase {
         this.fileRepository = fileRepository
     }
 
-    async createJob(file_content: Object, file_schema: Object) {
+    async createJob(file_content: Object, file_content_length: Number, file_schema: Object) {
 
         const jobDoc = new JobModel({
             schema: file_schema,
-            raw_data: file_content
+            raw_data: file_content,
+            raw_data_length: file_content_length
         });
         const job = await this.jobRepository.create(jobDoc);
         console.log(`New job with id ${jobDoc.id} created.`)
@@ -36,22 +36,20 @@ export class UploadFileUseCase implements IUploadFileUseCase {
 
     async createFile(jobId: string) {
 
-        const job = await this.jobRepository.find(jobId)
-
-        if (!job)
+        const res = await this.jobRepository.updateStatus(jobId, JobStatus.PROCESSING);
+        if (!res)
             throw new Error("File Upload process not found.");
 
-        await this.jobRepository.updateStatus(job.id, JobStatus.PROCESSING);
-        const file = this.processFile(job);
-
-        if (job.job_errors.length > 0) 
-            await this.jobRepository.updateErrors(job.id, job.job_errors);
-
-        await this.fileRepository.create(file);
-        await this.jobRepository.updateStatus(job.id, JobStatus.DONE);
-        await this.jobRepository.updateFileRef(job.id, job.file_id);
-
-        console.log(`File processed successfully.`);
+        const newFile: File = new FileModel({
+            job_id: jobId,
+        })
+        await this.fileRepository.create(newFile)
+        await this.jobRepository.updateFileRef(jobId, newFile.id);
+        const ok = await this.processFile(jobId, newFile.id);
+        if (ok) {
+            await this.jobRepository.updateStatus(jobId, JobStatus.DONE);
+            console.log(`File processed successfully.`);
+        }
     }
 
     private validateSchema(format: { [key: string]: string }, processedSchema: { column: string, nullable: boolean, dataType: string}[]) {
@@ -71,72 +69,90 @@ export class UploadFileUseCase implements IUploadFileUseCase {
         });
     }
 
-    private processFile (job: Job) {
 
-        const format: any = job.schema 
-        const raw_data: any = job.raw_data
+    private processRow(row: any, rowIndex: number, processedSchema: any[]) {
+        const newRow: any = {}
+        const rowErrors: { row: number; col: number}[] = []
+
+        for (let i = 0; i < processedSchema.length; i++) {
+            try {
+                const cell = row[i]; 
+                if (cell === null && !processedSchema[i]["nullable"]) {
+                    throw new Error("Null cell within not nullable column.") 
+                } else {
+                    var formattedCell;
+                    if (cell === null) {
+                        continue;
+                    } else {
+                        switch (processedSchema[i]["dataType"]) {
+                            case DataTypes.STRING:
+                                if (isNumber(cell) || isNumberList(cell))
+                                    throw new Error(`Cannot convert '${cell}' to a String: it is a Number or Array<Number>.`);
+                                formattedCell = cell.toString();
+                                break;
+                            case DataTypes.NUMBER:
+                                if (!isNumber(cell))
+                                    throw new Error(`Cannot convert '${cell}' to a Number.`);
+                                formattedCell = Number(cell);
+                                break;
+                            case DataTypes.ARRAY: 
+                                if (!isNumberList(cell.toString()))
+                                    throw new Error(`Cannot convert '${cell}' to an Array<Number>.`)
+                                const numbers = cell.toString().split(',').map(Number); 
+                                formattedCell = numbers.sort((a: number, b: number) => a - b);
+                                break;
+                        }
+                    }
+                    newRow[processedSchema[i]["column"]] = formattedCell
+                }
+            } catch (error) {
+                rowErrors.push({
+                    row: rowIndex + 1,
+                    col: i + 1
+                })
+            }
+        }
+
+        return { newRow, rowErrors };
+    }
+
+    private async processFile (jobId: string, fileId: string) {
+
+        const format: any = await this.jobRepository.findSchema(jobId);
         const processedSchema: { column: string, nullable: boolean, dataType: string }[] = []
         this.validateSchema(format, processedSchema)
-        const processedFile: typeof processedSchema[] = []
-        const totalErrors: { row: number; col: number}[] = []
 
-        raw_data.slice(1).forEach((row: any, rowIndex: number) => {
+        const data_length = await this.jobRepository.findRawDataLength(jobId);
 
-            const newRow: any = {}
-            const rowErrors: { row: number; col: number}[] = []
+        const batchSize = 2048
+        const batches = Math.ceil((data_length - 1) / batchSize);
 
-            for (let i = 0; i < processedSchema.length; i++) {
-                try {
-                    const cell = row[i]
-                    if (cell === null && !processedSchema[i]["nullable"]) {
-                        throw new Error("Null cell within not nullable column.") 
-                    } else {
-                        var formattedCell;
-                        if (cell === null) {
-                            continue;
-                        } else {
-                            switch (processedSchema[i]["dataType"]) {
-                                case DataTypes.STRING:
-                                    if (isNumber(cell) || isNumberList(cell))
-                                        throw new Error(`Cannot convert '${cell}' to a String: it is a Number or Array<Number>.`);
-                                    formattedCell = cell.toString();
-                                    break;
-                                case DataTypes.NUMBER:
-                                    if (!isNumber(cell))
-                                        throw new Error(`Cannot convert '${cell}' to a Number.`);
-                                    formattedCell = Number(cell);
-                                    break;
-                                case DataTypes.ARRAY: 
-                                    if (!isNumberList(cell))
-                                        throw new Error(`Cannot convert '${cell}' to an Array<Number>.`)
-                                    const numbers = cell.split(',').map(Number); 
-                                    formattedCell = numbers.sort((a: number, b: number) => a - b);
-                                    break;
-                            }
-                        }
-                        newRow[processedSchema[i]["column"]] = formattedCell
-                    }
-                } catch (error) {
-                    rowErrors.push({
-                        row: rowIndex + 1,
-                        col: i + 1
-                    })
-                }
+        //TODO ignore first row
+
+        for (let batchIndex = 0; batchIndex < batches; batchIndex++) {
+
+            const batchContent: typeof processedSchema[] = []
+            const batchErrors: { row: number; col: number}[] = []
+            const start = batchIndex * batchSize;
+            const batch = await this.jobRepository.findRawData(jobId, batchIndex + 1, batchSize);
+
+            batch.forEach((row: any, rowIndex: number) => {
+                const { newRow, rowErrors } = this.processRow(row, rowIndex + start + 1, processedSchema);
+
+                if (rowErrors.length === 0)
+                    batchContent.push(newRow)
+
+                batchErrors.push(...rowErrors);
+            });
+
+            const receivedData = await this.fileRepository.updateContent(fileId, batchContent)
+            const receivedErrors = await this.jobRepository.updateErrors(jobId, batchErrors)
+
+            if (!receivedData || !receivedErrors) {
+                throw new Error("Interrupted data loading.")
             }
+        }
 
-            if (rowErrors.length === 0)
-                processedFile.push(newRow)
-
-            totalErrors.push(...rowErrors);
-        });
-
-        const newFile: File = new FileModel({
-            data: processedFile, 
-            job_id: job.id,
-        })
-        job.job_errors = totalErrors
-        job.file_id = newFile.id
-
-        return newFile;
+        return true;
     }
 }
