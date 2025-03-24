@@ -11,7 +11,13 @@ export class GetFileUseCase implements IGetFileUseCase {
     }
 
     async getFile(id: string) {
-        return this.repository.find(id);
+        const file = await this.repository.find(id);
+
+        return {
+            id: file.id,
+            job_id: file.job_id,
+            content: file.data,
+        }
     }
 
 }

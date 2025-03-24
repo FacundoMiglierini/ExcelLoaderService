@@ -14,6 +14,7 @@ export class GetJobStatusUseCase implements IGetJobStatusUseCase {
         const job = await this.repository.find(id, page, limit);
 
         return {
+            id: job.id,
             status: job.status,
             ...(job.file_id !== null && { file_id: job.file_id }),
             errors: job.job_errors,
