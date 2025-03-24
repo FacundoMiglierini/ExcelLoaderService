@@ -1,8 +1,8 @@
-import { IFileInteractor } from "../interfaces/IFileInteractor";
 import { IFileRepository } from "../interfaces/IFileRepository";
+import { IGetFileUseCase } from "../interfaces/IGetFileUseCase";
 
 
-export class FileInteractor implements IFileInteractor {
+export class GetFileUseCase implements IGetFileUseCase {
 
     private repository: IFileRepository;
 
@@ -11,7 +11,6 @@ export class FileInteractor implements IFileInteractor {
     }
 
     async getFile(id: string) {
-
         return this.repository.find(id);
     }
 

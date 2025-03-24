@@ -1,13 +1,15 @@
 import { NextFunction, Request, Response } from "express";
-import { IJobInteractor } from "../interfaces/IJobInteractor";
 import XLSX from 'xlsx';
 
-export class JobController {
+import { IUploadFileUseCase } from "../interfaces/IUploadFileUseCase";
 
-    private interactor: IJobInteractor
 
-    constructor(interactor: IJobInteractor) {
-        this.interactor = interactor;
+export class UploadFileController {
+
+    private useCase: IUploadFileUseCase
+
+    constructor(useCase: IUploadFileUseCase) {
+        this.useCase = useCase;
     }
 
     async onCreateJob(req: Request, res: Response, next: NextFunction) {
@@ -39,7 +41,7 @@ export class JobController {
                 throw new Error('Missing required fields: file_data and format');
             }
 
-            const jobId = await this.interactor.createJob(excelData, schema);
+            const jobId = await this.useCase.createJob(excelData, schema);
 
             return res.status(200).json({"job_id": jobId});
 
@@ -48,26 +50,4 @@ export class JobController {
         }
     }
 
-    async onGetJobStatus(req: Request, res: Response, next: NextFunction) {
-        try {
-            const jobId = req.params.id
-
-            const { page = 1, limit = 10 } = req.query;
-
-            // Ensure page and limit are integers
-            const pageNumber = parseInt(page as string);
-            const limitNumber = parseInt(limit as string);
-
-            // Validate pagination parameters
-            if (isNaN(pageNumber) || isNaN(limitNumber) || pageNumber < 1 || limitNumber < 1) {
-                return res.status(400).send("Invalid pagination parameters");
-            }
-
-            const data = await this.interactor.getJobStatus(jobId, pageNumber, limitNumber);
-
-            return res.status(200).json(data);
-        } catch(error) {
-            next(error)
-        }
-    }
 }

@@ -1,0 +1,41 @@
+import { Amqp } from 'typescript-amqp';
+import { broker } from '../config/config';
+import { JobRepository } from '../repositories/jobRepository';
+import { FileRepository } from '../repositories/fileRepository';
+import { UploadFileUseCase } from '../usecases/uploadFileUseCase';
+
+
+const jobRepository = new JobRepository();
+const fileRepository = new FileRepository();
+const useCase = new UploadFileUseCase(jobRepository, fileRepository);
+
+async function consume() {
+
+    const amqp = new Amqp();
+    const connection = await amqp.connect(broker.URI); 
+   
+    const channel = await connection.createChannel()
+    await channel.assertExchange(broker.BROKER_EXCHANGE, 'fanout', {
+      durable: false
+    });
+
+    const queue = await channel.assertQueue('', {
+      exclusive: true
+    });
+
+    console.log(` [*] Waiting for messages in ${queue.queue}. To exit press CTRL+C`);
+
+    await channel.bindQueue(queue.queue, broker.BROKER_EXCHANGE, '');
+
+    channel.consume(queue.queue, async (msg: any) => {
+        if (msg.content)
+            await useCase.createFile(msg.content.toString())
+        channel.ack(msg);
+    }, {
+        noAck: false
+    });
+}
+
+//consume().catch(err => console.error("Error during consume: ", err))
+
+export { consume }
