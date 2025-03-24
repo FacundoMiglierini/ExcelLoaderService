@@ -1,5 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import { v4 as uuidv4 } from "uuid";
+
 import { File } from "../interfaces/IFile";
 
 export const fileSchema = new Schema<File>({
@@ -15,7 +16,7 @@ export const fileSchema = new Schema<File>({
             ref: 'Job', 
         },
     },{
-        timestamps: true // Enable timestamps here
+        timestamps: true 
     }
 );
 

@@ -5,6 +5,4 @@ export interface Job extends Document {
     raw_data: Object;
     job_errors: { row: number; col: number }[];
     file_id: string;
-    createdAt: Date;
-    updatedAt: Date;
 }

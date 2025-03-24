@@ -11,14 +11,13 @@ export class JobRepository implements IJobRepository {
         return job;
     }
 
-    async find(id: string, pagination?: { offset?: number; limit?: number }): Promise<Job> {
-
+    async find(id: string, page?: number, limit?: number): Promise<Job> {
         const query = JobModel.findOne({ id });
           
-        if (pagination) {
+        if (page !== undefined && limit !== undefined) {
             query.select({
-              errors: {
-                $slice: [pagination.offset || 0, pagination.limit || 10]
+              job_errors: {
+                $slice: [page - 1, limit]
               }
             });
         }

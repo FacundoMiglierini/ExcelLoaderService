@@ -25,10 +25,11 @@ services:
     image: rabbitmq:3-management
     container_name: rabbitmq
     ports:
-      - 5672:5672
-      - 15672:15672
+      - ${BROKER_PORT}:${BROKER_PORT}
+      - ${BROKER_INTERFACE_PORT}:${BROKER_INTERFACE_PORT}
     volumes:
       - rabbitmq-v:/var/lib/rabbitmq
+    env_file: .env
 
 volumes:
   database-v:
