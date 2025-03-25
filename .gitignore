@@ -2,6 +2,8 @@
 database-v
 rabbitmq-v
 
+src/tests/*.js
+
 # Logs
 logs
 *.log
