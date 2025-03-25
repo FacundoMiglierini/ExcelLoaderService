@@ -17,7 +17,7 @@ export class GetFileController {
             const limitNumber = parseInt(limit as string);
 
             if (isNaN(pageNumber) || isNaN(limitNumber) || pageNumber < 1 || limitNumber < 1) {
-                return res.status(400).send("Invalid pagination parameters");
+                return res.status(400).send({ message: "Invalid pagination parameters" });
             }
 
             const data = await this.useCase.getFile(fileId, pageNumber, limitNumber);
