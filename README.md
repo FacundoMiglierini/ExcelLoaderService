@@ -4,11 +4,12 @@ Servicio de carga de planillas de cálculo Excel con validación de formato y no
 
 ## Descripción
 
-Este proyecto está construido utilizando **Node.js**, **Express**, **TypeScript**, **RabbitMQ** y **MongoDB**. Proporciona un servicio que permite la carga de planillas Excel 
-mediante el manejo de solicitudes HTTP, haciendo uso del protocolo **API REST**. Las planillas son enviadas al servicio junto con un esquema definido por parámetro, el cual establece 
-el formato bajo el cual se procesarán los archivos recibidos. Para evitar el bloqueo de la interfaz HTTP durante este procesamiento (cuyo costo es directamente proporcional al tamaño 
-del archivo a procesar), se recurre a **RabbitMQ**, un *message broker* que permite la comunicación asincrónica de peticiones gestionadas por medio de una cola. Cuando dichas peticiones 
-son atendidas, se resuelven por lotes y la salida resultante se persiste de forma incremental en una base de datos **MongoDB**. 
+Este proyecto está desarrollado utilizando **Node.js**, **Express**, **TypeScript**, **RabbitMQ** y **MongoDB**. Proporciona un servicio que permite la carga y procesamiento de archivos Excel 
+mediante solicitudes HTTP, siguiendo la arquitectura **RESTful API**. 
+
+El proceso comienza cuando el usuario envía una planilla Excel junto con un esquema que define el formato de los datos a procesar. Para evitar la sobrecarga y el bloqueo de la interfaz HTTP durante el procesamiento de archivos, que varía en tiempo según su tamaño, se implementa **RabbitMQ** como un message broker. Esto permite gestionar las peticiones de manera asincrónica, utilizando colas para procesar los archivos sin afectar la experiencia del usuario.
+
+Una vez que las peticiones son encoladas, son procesadas en lotes. El resultado del procesamiento se guarda de forma incremental en **MongoDB**, asegurando que los datos sean persistidos correctamente a medida que se completan los lotes.
 
 ## Tecnologías Utilizadas
 
@@ -16,9 +17,45 @@ son atendidas, se resuelven por lotes y la salida resultante se persiste de form
 - **Express**: Framework web minimalista para Node.js.
 - **TypeScript**: Superset de JavaScript que agrega tipado estático.
 - **MongoDB**: Base de datos NoSQL para almacenar datos.
-- **RabbitMQ**: Sistema de mensajería para comunicación asincrónica entre aplicaciones.
+- **RabbitMQ**: Sistema de mensajería para comunicación asincrónica.
 
 ## Arquitectura
+
+![Arquitectura del servicio, siguiendo las reglas de Clean Architecture](/docs/architecture.png)
+
+Este sistema está construido utilizando Node.js con Express y TypeScript. La arquitectura sigue el patrón de Clean Architecture, que promueve un código modular, desacoplado y fácil de mantener. A continuación, se describe cómo se estructura el sistema y cómo interactúan sus componentes principales.
+
+### 1. API REST
+
+El sistema proporciona una API REST que actúa como punto de entrada para interactuar con los diferentes servicios y funcionalidades del sistema. Esta API está construida sobre Express, y cada ruta de la API está gestionada por un Controller.
+
+### 2. Controllers
+
+Los Controllers son responsables de recibir las solicitudes de los clientes y delegar la lógica de negocio a los Use Cases. Cada controlador está asociado a una ruta de la API y maneja la validación y el formato de los datos de entrada y salida. Los controladores se comunican con los Use Cases a través de interfaces, lo que permite un desacoplamiento entre la lógica de presentación y la lógica de negocio.
+
+### 3. Use Cases
+
+Los Use Cases representan las operaciones de negocio de la aplicación y contienen la lógica de procesamiento principal. Cada Use Case es independiente y desacoplado gracias a las interfaces que definen su comportamiento. Esto permite que los casos de uso sean fácilmente intercambiables o probados sin necesidad de depender de implementaciones específicas.
+
+Uno de los casos de uso importantes es el de Carga y procesamiento de Archivos. Este proceso sigue estos pasos:
+
+  - El usuario envía una solicitud para cargar un archivo.
+  - El Controller recibe la solicitud y delega la operación al Use Case correspondiente.
+  - El Use Case de carga genera un identificador único para el proceso de carga y retorna inmediatamente este ID al cliente.
+  - Posteriormente, el Use Case envía un mensaje a RabbitMQ (como Message Broker) para encolar el nuevo proceso de carga.
+  - Cuando llega su turno, RabbitMQ invoca nuevamente una función del Use Case para continuar con el procesamiento del archivo. De esta manera se evita el bloqueo de la interfaz HTTP y se gestiona el procesamiento de manera asincrónica.
+
+### 4. Message Broker (RabbitMQ)
+
+RabbitMQ actúa como un Message Broker en el sistema. La comunicación asincrónica a través de RabbitMQ permite una arquitectura más escalable y flexible.
+
+### 5. Repositories
+
+El acceso a la base de datos y el almacenamiento de las entidades se realiza a través de repositorios. Los repositorios son responsables de manejar la persistencia de las entidades en las diferentes bases de datos, en este caso, MongoDB. Este patrón asegura que la lógica de negocio y el acceso a servicios externos estén desacoplados.
+
+#### MongoDB
+
+El sistema utiliza MongoDB para almacenar los procesos de carga de archivos y los archivos procesados. La implementación del repositorio que maneja MongoDB es independiente y puede ser fácilmente intercambiada por otro sistema de almacenamiento sin afectar la lógica de negocio.
 
 ## Herramientas necesarias
 - **Yarn**: Versión 1.x.
@@ -248,7 +285,7 @@ Requiere un token de autenticación en la cabecera de la solicitud.
       ```
 - **Código 404: No encontrado**
 
-    - Descripción: Si no se encuentra el trabajo correspondiente al ```jobId```, se devolverá un error con el mensaje correspondiente.
+    - Descripción: Si no se encuentra el archivo correspondiente al ```fileId```, se devolverá un error con el mensaje correspondiente.
     - Cuerpo de la respuesta:
       ```json
       {
