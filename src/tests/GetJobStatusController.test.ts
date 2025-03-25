@@ -58,7 +58,7 @@ describe('GetJobStatusController', () => {
     const response = await request(app).get('/job/valid-job-id?page=0&limit=-10');
     
     expect(response.status).toBe(400);
-    expect(response.text).toBe("Invalid pagination parameters");
+    expect(response.body).toEqual({ message: "Invalid pagination parameters" });
   });
 
 });
