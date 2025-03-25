@@ -96,7 +96,7 @@ yarn start
 ## Uso 
 
 **Aclaración**: dado que no se desarrolló un endpoint de login, en el archivo de entorno '.env' se encuentran definidos dos tokens: ```JWT_1``` y ```JWT_2```, generados a partir de la clave secreta ```APP_SECRET```
-declarada dentro del mismo archivo. Es posible utilizar los tokens poner a prueba los endpoints permisionados, agregándolos uno de ellos al campo de cabecera ```Authorization```.
+declarada dentro del mismo archivo. Es posible utilizar los tokens para poner a prueba los endpoints permisionados, agregando uno de ellos al campo de cabecera ```Authorization```.
 
 Una vez que el servidor está en ejecución, es posible interactuar con él mediante las siguientes rutas:
 
