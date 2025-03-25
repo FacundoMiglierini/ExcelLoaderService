@@ -191,7 +191,7 @@ Requiere un token de autenticación en la cabecera de la solicitud.
 
 - **Código 200: Éxito**
 
-    - Descripción: Si la solicitud es procesada correctamente, se devolverán los datos del estado del trabajo en formato JSON.
+    - Descripción: Si la solicitud es procesada correctamente, se devolverán los datos del estado del trabajo en formato JSON, con los errores paginados.
     - Cuerpo de la respuesta:
       ```json
       {
