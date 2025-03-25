@@ -16,6 +16,12 @@ export class UploadFileController {
         try {
             const { file_content } = req.files as { [key: string]: Express.Multer.File[] };
 
+            if (!file_content || !req.body.file_schema) {
+                const error: any = new Error("Missing required fields: file_content and/or file_schema");
+                error.name = "MissingFieldError"; 
+                throw error;
+            } 
+
             // Process Excel
             const excelBuffer = file_content[0]?.buffer;
             const workbook = XLSX.read(excelBuffer);
@@ -30,13 +36,6 @@ export class UploadFileController {
 
             // Process schema
             const schema = JSON.parse(req.body.file_schema.toString());
-            
-            if (!excelData || !schema) {
-                const error: any = new Error("Missing required fields: file_data and/or file_schema");
-                error.name = "MissingFieldError"; 
-                throw error;
-            }
-
             const jobId = await this.useCase.createJob(excelData, excelData.length, schema);
 
             return res.status(202).json({"job_id": jobId});

@@ -21,7 +21,7 @@ const uploadFileRouter = express.Router();
 //@ts-ignore
 uploadFileRouter.use(Authenticate)
 
-uploadFileRouter.post("/file", upload.fields([
+uploadFileRouter.post("/files", upload.fields([
   { name: 'file_content', maxCount: 1 },
 ]), async (req, res) => {
     await controller.onCreateJob(req, res);
