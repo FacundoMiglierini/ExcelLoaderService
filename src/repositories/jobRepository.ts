@@ -65,11 +65,12 @@ export class JobRepository implements IJobRepository {
 
     async findRawData(id: string, page: number, limit: number): Promise<Object> {
         const query = JobModel.findOne({ id });
+        const skip = (page - 1) * limit;
           
         query.select({
-          raw_data: {
-            $slice: [page - 1, limit]
-          }
+            raw_data: {
+            $slice: [skip, limit]
+            }
         });
 
         const job = await query.exec();

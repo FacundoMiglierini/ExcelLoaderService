@@ -143,8 +143,10 @@ export class UploadFileUseCase implements IUploadFileUseCase {
                 batchErrors.push(...rowErrors);
             });
 
-            const receivedData = await this.fileRepository.updateContent(fileId, batchContent)
-            const receivedErrors = await this.jobRepository.updateErrors(jobId, batchErrors)
+            const [receivedData, receivedErrors] = await Promise.all([
+                this.fileRepository.updateContent(fileId, batchContent),
+                this.jobRepository.updateErrors(jobId, batchErrors)
+            ]);
 
             if (!receivedData || !receivedErrors) {
                 throw new Error("Interrupted data loading.")
