@@ -1,0 +1,38 @@
+version: '3.9'
+
+services:
+
+  mongodb:
+    container_name: ${DATABASE_HOST}
+    image: mongo:latest
+    restart: always
+    command:
+      - --storageEngine
+      - wiredTiger
+      - --auth
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+      - MONGO_INITDB_DATABASE=${MONGO_INITDB_DATABASE}
+    ports:
+      - ${DATABASE_PORT}:${DATABASE_PORT}
+    volumes:
+      - ./database-v:/data/db
+      - ./database/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
+    env_file: .env
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - ${BROKER_PORT}:${BROKER_PORT}
+      - ${BROKER_INTERFACE_PORT}:${BROKER_INTERFACE_PORT}
+    volumes:
+      - rabbitmq-v:/var/lib/rabbitmq
+    env_file: .env
+
+volumes:
+  database-v:
+    name: "database-v"
+  rabbitmq-v:
+    name: "rabbitmq-v"
