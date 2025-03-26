@@ -10,11 +10,13 @@ export const fileSchema = new Schema<File>({
             unique: true,
             required: true,
         },
-        data: { type: Object },
-        job_id: { 
+        name: {
             type: String,
-            ref: 'Job', 
+            default: 'unamed.xlsx'
         },
+        content: { type: Object },
+        length: { type: Number },
+        schema: { type: Object },
     },{
         timestamps: true 
     }

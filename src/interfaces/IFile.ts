@@ -1,5 +1,7 @@
 export interface File extends Document {
     id: string;
-    data: Object;
-    job_id: string;
+    name: string;
+    content: Object;
+    length: number;
+    schema: Object;
 }

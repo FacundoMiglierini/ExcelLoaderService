@@ -6,3 +6,8 @@ export function isNumberList(value: string): boolean {
 export function isNumber(value: string): boolean {
     return !isNaN(Number(value));
 }
+
+export function generateCustomSchema() {
+
+    throw new Error("not implemented.");
+}

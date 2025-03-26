@@ -23,20 +23,18 @@ export const jobSchema = new Schema<Job>({
             default: JobStatus.PENDING,
             required: true,
         },
-        schema: { type: Object },
-        raw_data_length: {
-            type: Number, 
-            default: 0
-        },
-        raw_data: { type: Object },
         job_errors: {
             type: [jobErrorSchema], 
             default: [],
         },
-        file_id: { 
+        excel_file_id: { 
             type: String,
             ref: 'File', 
         },
+        parsed_file_id: {
+            type: String,
+            ref: 'File', //TODO use another schema as ref
+        }
     },{
         timestamps: true 
     }

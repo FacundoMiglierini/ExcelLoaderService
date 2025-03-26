@@ -9,14 +9,14 @@ export class FileRepository implements IFileRepository {
         return await FileModel.create(data);
     }
 
-    async find(id: string, page?: number, limit?: number): Promise<File> {
+    async findContent(id: string, page: number, limit: number): Promise<Object> {
 
-        const query = FileModel.findOne({id: id});
+        const query = FileModel.findOne({id: id}).select('content');
 
         if (page !== undefined && limit !== undefined) {
             const skip = (page - 1) * limit;
             query.select({
-              data: {
+              content: {
                 $slice: [skip, limit]
               }
             });
@@ -30,20 +30,35 @@ export class FileRepository implements IFileRepository {
             throw error;
         }
 
-        return file;
+        return file.content;
     }
 
-    async updateContent(id: string, content: any): Promise<boolean> {
+    async findContentLength(id: string): Promise<number> {
+        const query = FileModel.findOne({ id });
+        query.select('length'); 
+        const file = await query.exec();
 
-        const res = await FileModel.updateOne({ id: id }, { $push: { data: { $each: content } } });
+        if (!file) {
+            const error: any = new Error("File not found.");
+            error.name = "NotFoundError"; 
+            throw error;
+        }
 
-        if (!res.acknowledged) {
+        return file.length;
+    }
+
+    async findSchema(id: string): Promise<Object> {
+        const query = FileModel.findOne({ id });
+        query.select('schema'); 
+        const file = await query.exec();
+
+        if (!file) {
             const error: any = new Error("File not found");
             error.name = "NotFoundError"; 
             throw error;
         }
 
-        return res.acknowledged;
+        return file.schema;
     }
 
 }
