@@ -23,10 +23,11 @@ export class UploadFileController {
             } 
 
             // Process Excel
+            const excelName = file_content[0]?.originalname;
             const excelBuffer = file_content[0]?.buffer;
             const workbook = XLSX.read(excelBuffer);
             const sheetName = workbook.SheetNames[0];
-            const excelData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
+            const excelContent = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
               header: 1,
               raw: true,
               blankrows: true,
@@ -36,7 +37,7 @@ export class UploadFileController {
 
             // Process schema
             const schema = JSON.parse(req.body.file_schema.toString());
-            const jobId = await this.useCase.createJob(excelData, excelData.length, schema);
+            const jobId = await this.useCase.createJob(excelName, excelContent, excelContent.length, schema);
 
             return res.status(202).json({"job_id": jobId});
 

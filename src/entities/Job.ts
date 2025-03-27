@@ -5,7 +5,7 @@ import { Job } from "../interfaces/IJob";
 import JobStatus from "../enums/Job";
 
 
-const jobErrorSchema = new mongoose.Schema({
+export const jobErrorSchema = new Schema({
   row: Number,
   col: Number
 }, { _id: false }); 
@@ -31,9 +31,9 @@ export const jobSchema = new Schema<Job>({
             type: String,
             ref: 'File', 
         },
-        parsed_file_id: {
+        parsed_file_collection: {
             type: String,
-            ref: 'File', //TODO use another schema as ref
+            required: true,
         }
     },{
         timestamps: true 

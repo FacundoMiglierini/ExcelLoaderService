@@ -34,6 +34,32 @@ export class JobRepository implements IJobRepository {
         return job;
     }
 
+    async findExcelFileRef(id: string): Promise<string> {
+        const query = JobModel.findOne({ id }).select('excel_file_id');
+        const job = await query.exec();
+
+        if (!job) {
+            const error: any = new Error("Job not found");
+            error.name = "NotFoundError"; 
+            throw error;
+        }
+
+        return job.excel_file_id;
+    }
+
+    async findParsedFileCollection(id: string): Promise<string> {
+        const query = JobModel.findOne({ id }).select('parsed_file_collection');
+        const job = await query.exec();
+
+        if (!job) {
+            const error: any = new Error("Job not found");
+            error.name = "NotFoundError"; 
+            throw error;
+        }
+
+        return job.parsed_file_collection;
+    }
+
     async updateStatus(id: string, status: string): Promise<boolean> {
 
         const res = await JobModel.updateOne({ id }, { status: status});
@@ -50,19 +76,6 @@ export class JobRepository implements IJobRepository {
     async updateErrors(id: string, errors: Object): Promise<boolean> {
        
         const res = await JobModel.updateOne({ id: id }, { $push: { job_errors: { $each: errors } } });
-
-        if (!res.acknowledged) {
-            const error: any = new Error("Job not found");
-            error.name = "NotFoundError"; 
-            throw error;
-        }
-
-        return res.acknowledged;
-    }
-
-    async updateParsedFileRef(id: string, file_ref: string): Promise<boolean> {
-       
-        const res = await JobModel.updateOne({ id: id }, { parsed_file_id: file_ref});
 
         if (!res.acknowledged) {
             const error: any = new Error("Job not found");
