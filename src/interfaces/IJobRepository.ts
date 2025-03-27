@@ -6,5 +6,5 @@ export interface IJobRepository {
     findExcelFileRef(id: string): Promise<string>;
     findParsedFileCollection(id: string): Promise<string>;
     updateStatus(id: string, status: string): Promise<boolean>;
-    updateErrors(id: string, errors: Object): Promise<boolean>;
+    saveBatchErrors(id: string, errors: Object[], force: boolean): Promise<boolean>;
 }

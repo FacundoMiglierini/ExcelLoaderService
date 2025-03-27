@@ -1,4 +1,4 @@
 export interface ICustomSchemaRepository {
-    insertMany(data: Object[], model: Object): Promise<boolean>;
+    saveBatchContent(batchContent: Object[], model: Object, force: boolean): Promise<boolean>;
 }
 

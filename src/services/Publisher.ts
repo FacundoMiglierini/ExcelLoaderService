@@ -2,7 +2,7 @@ import { Amqp } from 'typescript-amqp';
 import { broker } from '../config/config';
 
 
-async function publish(id: string) {
+async function publish(data: {id: string, filename: string, schema: any}) {
 
     const amqp = new Amqp();
     const connection = await amqp.connect(broker.URI); 
@@ -12,7 +12,7 @@ async function publish(id: string) {
     });
 
     console.debug(`Msg published.`)
-    await channel.publish(broker.BROKER_EXCHANGE, '', Buffer.from(id));
+    await channel.publish(broker.BROKER_EXCHANGE, '', Buffer.from(JSON.stringify(data)));
 }
 
 export { publish };

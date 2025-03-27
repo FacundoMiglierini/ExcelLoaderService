@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
+import { ensureUploadsDirectory } from '../utils/upload';
 
 dotenv.config();
 
@@ -23,6 +24,11 @@ export const BROKER_PASSWORD = process.env.BROKER_PASSWORD || '';
 export const BROKER_HOST = process.env.BROKER_HOST || '';
 export const BROKER_PORT = process.env.BROKER_PORT? Number(process.env.BROKER_PORT) : 5672;
 export const BROKER_EXCHANGE = 'excel';
+
+export const UPLOAD_DIR = './uploads';
+ensureUploadsDirectory(UPLOAD_DIR);
+
+export const BATCH_SIZE = 1024;
 
 export const database = {
     DATABASE_USERNAME,

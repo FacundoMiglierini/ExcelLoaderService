@@ -73,7 +73,7 @@ export class JobRepository implements IJobRepository {
         return res.acknowledged;
     }
 
-    async updateErrors(id: string, errors: Object): Promise<boolean> {
+    async saveBatchErrors(id: string, errors: Object, force: boolean | undefined = false): Promise<boolean> {
        
         const res = await JobModel.updateOne({ id: id }, { $push: { job_errors: { $each: errors } } });
 
