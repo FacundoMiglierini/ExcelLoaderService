@@ -135,7 +135,7 @@ export class UploadFileUseCase implements IUploadFileUseCase {
                 }
             } catch (error) {
                 rowErrors.push({
-                    row: rowIndex + 1,
+                    row: rowIndex,
                     col: i + 1
                 })
             }
@@ -147,7 +147,7 @@ export class UploadFileUseCase implements IUploadFileUseCase {
     private async processFile (jobId: string, fileId: string, model: any, schema: { [key: string] : { type: string, required: boolean } }) {
 
         const data_length = await this.fileRepository.findContentLength(fileId);
-        const batchSize = 1024
+        const batchSize = 2048
         const batches = Math.ceil(data_length / batchSize);
         const schemaAsList = Object.keys(schema).map(key => {
             //@ts-ignore
