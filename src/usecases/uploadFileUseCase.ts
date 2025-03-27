@@ -8,16 +8,19 @@ import JobStatus from "../enums/Job";
 import { publish } from "../services/Publisher";
 import { isNumber, isNumberList } from "../utils/fileProcessingUtils";
 import mongoose, { Schema, SchemaTypes } from "mongoose";
+import { ICustomSchemaRepository } from "../interfaces/ICustomSchemaRepository";
 
 
 export class UploadFileUseCase implements IUploadFileUseCase {
 
     private jobRepository: IJobRepository;
     private fileRepository: IFileRepository;
+    private customSchemaRepository: ICustomSchemaRepository;
 
-    constructor(jobRepository: IJobRepository, fileRepository: IFileRepository) {
+    constructor(jobRepository: IJobRepository, fileRepository: IFileRepository, customSchemaRepository: ICustomSchemaRepository) {
         this.jobRepository = jobRepository
         this.fileRepository = fileRepository
+        this.customSchemaRepository = customSchemaRepository
     }
 
     async createJob(file_name: String, file_content: Object, file_content_length: Number, file_schema: Object) {
@@ -147,6 +150,7 @@ export class UploadFileUseCase implements IUploadFileUseCase {
         const batchSize = 1024
         const batches = Math.ceil(data_length / batchSize);
         const schemaAsList = Object.keys(schema).map(key => {
+            //@ts-ignore
             const type = schema[key].type.name; 
             const required = schema[key].required;
 
@@ -173,16 +177,8 @@ export class UploadFileUseCase implements IUploadFileUseCase {
                 batchErrors.push(...rowErrors);
             });
 
-            //TODO remove logs
-            model.insertMany(batchContent).then(() => {
-                console.log(`New ${batchSize} documents inserted.`); 
-            })
-            .catch((error: any) => {
-                console.error('Error instering new documents:', error);
-            });
-            this.jobRepository.updateErrors(jobId, batchErrors).then(() => {
-                console.log(`New ${batchErrors.length} errors inserted.`);
-            })
+            await this.customSchemaRepository.insertMany(batchContent, model);
+            this.jobRepository.updateErrors(jobId, batchErrors).then(() => {})
             .catch((error: any) => {
                 console.error('Error inserting new errors:', error);
             });
