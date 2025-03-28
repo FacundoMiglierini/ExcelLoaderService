@@ -5,11 +5,6 @@ import { Job } from "../interfaces/IJob";
 import JobStatus from "../enums/Job";
 
 
-export const jobErrorSchema = new Schema({
-  row: Number,
-  col: Number
-}, { _id: false }); 
-
 export const jobSchema = new Schema<Job>({
         id: {
             type: String,
@@ -22,10 +17,6 @@ export const jobSchema = new Schema<Job>({
             enum: Object.values(JobStatus),
             default: JobStatus.PENDING,
             required: [true, 'Status is required'],
-        },
-        job_errors: {
-            type: [jobErrorSchema], 
-            default: [],
         },
         filename: { 
             type: String,

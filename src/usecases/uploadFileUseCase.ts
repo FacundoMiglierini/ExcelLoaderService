@@ -8,15 +8,19 @@ import mongoose, { Schema, SchemaTypes } from "mongoose";
 import { ICustomSchemaRepository } from "../interfaces/ICustomSchemaRepository";
 import { readExcel } from "../utils/fileUploadingUtils";
 import { UPLOAD_DIR } from "../config/config";
+import { JobError } from "../interfaces/IJobError";
+import { IJobErrorRepository } from "../interfaces/IJobErrorRepository";
 
 
 export class UploadFileUseCase implements IUploadFileUseCase {
 
     private jobRepository: IJobRepository;
+    private jobErrorRepository: IJobErrorRepository;
     private customSchemaRepository: ICustomSchemaRepository;
 
-    constructor(jobRepository: IJobRepository, customSchemaRepository: ICustomSchemaRepository) {
+    constructor(jobRepository: IJobRepository, jobErrorRepository: IJobErrorRepository, customSchemaRepository: ICustomSchemaRepository) {
         this.jobRepository = jobRepository
+        this.jobErrorRepository = jobErrorRepository
         this.customSchemaRepository = customSchemaRepository
     }
 
@@ -83,9 +87,9 @@ export class UploadFileUseCase implements IUploadFileUseCase {
         return processedSchema;
     }
 
-    private processRow(row: any, rowIndex: number, schema: any[]) {
+    private processRow(jobId: string, row: any, rowIndex: number, schema: any[]) {
         const newRow: any = {}
-        const rowErrors: { row: number; col: number}[] = []
+        const rowErrors: JobError[] = []
         newRow["row"] = rowIndex
 
         for (let i = 0; i < schema.length; i++) {
@@ -121,6 +125,7 @@ export class UploadFileUseCase implements IUploadFileUseCase {
                 }
             } catch (error) {
                 rowErrors.push({
+                    job_id: jobId,
                     row: rowIndex,
                     col: i + 1
                 })
@@ -146,28 +151,26 @@ export class UploadFileUseCase implements IUploadFileUseCase {
 
         const data = readExcel(`${UPLOAD_DIR}/${filename}`);
         let rowIndex = 0;
-
         const batchContent: any[] = []
-        const batchErrors: { row: number, col: number }[] = []
+        const batchErrors: JobError[] = []
 
         for (const row of data) {
 
             rowIndex++;
-
-            const { newRow, rowErrors } = this.processRow(row, rowIndex, schemaAsList);
+            const { newRow, rowErrors } = this.processRow(jobId, row, rowIndex, schemaAsList);
 
             if (rowErrors.length > 0) {
                 batchErrors.push(...rowErrors);
-                await this.jobRepository.saveBatchErrors(jobId, batchErrors);
+                await this.jobErrorRepository.saveMany(batchErrors);
                 continue
             }
 
             batchContent.push(newRow);
-            await this.customSchemaRepository.saveBatchContent(batchContent, model);
+            await this.customSchemaRepository.saveMany(batchContent, model);
         }
 
-        await this.customSchemaRepository.saveBatchContent(batchContent, model, true)
-        await this.jobRepository.saveBatchErrors(jobId, batchErrors, true)
+        await this.jobErrorRepository.saveMany(batchErrors, true)
+        await this.customSchemaRepository.saveMany(batchContent, model, true)
 
         return true;
     }

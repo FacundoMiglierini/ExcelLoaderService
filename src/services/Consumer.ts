@@ -3,11 +3,13 @@ import { broker } from '../config/config';
 import { JobRepository } from '../repositories/jobRepository';
 import { UploadFileUseCase } from '../usecases/uploadFileUseCase';
 import { CustomSchemaRepository } from '../repositories/customSchemaRepository';
+import { JobErrorRepository } from '../repositories/jobErrorRepository';
 
 
 const jobRepository = new JobRepository();
+const jobErrorRepository = new JobErrorRepository();
 const customSchemaRepository = new CustomSchemaRepository();
-const useCase = new UploadFileUseCase(jobRepository, customSchemaRepository);
+const useCase = new UploadFileUseCase(jobRepository, jobErrorRepository, customSchemaRepository);
 
 export default async function brokerConsumerConnection() {
 
