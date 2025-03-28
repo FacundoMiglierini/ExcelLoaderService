@@ -3,6 +3,8 @@ database-v
 rabbitmq-v
 
 src/tests/*.js
+uploads/*
+!uploads/
 
 # Logs
 logs
