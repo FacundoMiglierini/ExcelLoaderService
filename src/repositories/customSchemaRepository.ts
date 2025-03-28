@@ -1,16 +1,18 @@
+import { Model } from "mongoose";
 import { ICustomSchemaRepository } from "../interfaces/ICustomSchemaRepository";
+import { BATCH_SIZE } from "../config/config";
 
 export class CustomSchemaRepository implements ICustomSchemaRepository{
 
-    async saveBatchContent(data: Object[], model: any, force: boolean | undefined = false): Promise<boolean> {
+    async saveBatchContent(data: Object[], model: Model<any>, force: boolean | undefined = false): Promise<void> {
 
-        const res = await model.insertMany(data, { ordered: false });
-        if (res.length !== data.length) {
-            const error: any = new Error("Insert operation failed.");
-            error.name = "InsertOperationFailed";
+        if (data.length === 0) {
+            return
         }
-        
-        return true;
+        if (data.length >= BATCH_SIZE || force) {
+            await model.insertMany(data, { ordered: false })
+            data.length = 0 
+        }
     }
 
 }

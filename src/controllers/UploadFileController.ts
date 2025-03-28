@@ -19,9 +19,9 @@ export class UploadFileController {
                 throw error;
             }
 
-            const filePath = req.file.path;
+            const filename = req.file.filename;
             const schema = req.body.file_schema;
-            const jobId = await this.useCase.createJob(filePath, schema);
+            const jobId = await this.useCase.createJob(filename, schema);
 
             return res.status(202).json({
                 message: 'File uploaded successfully',

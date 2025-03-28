@@ -15,25 +15,25 @@ export const jobSchema = new Schema<Job>({
             type: String,
             default: uuidv4,
             unique: true,
-            required: true,
+            required: [true, 'ID is required'],
         },
         status: {
             type: String,
             enum: Object.values(JobStatus),
             default: JobStatus.PENDING,
-            required: true,
+            required: [true, 'Status is required'],
         },
         job_errors: {
             type: [jobErrorSchema], 
             default: [],
         },
-        excel_file_id: { 
+        filename: { 
             type: String,
-            ref: 'File', 
+            required: [true, 'Filename is required'],
         },
-        parsed_file_collection: {
+        schema: {
             type: String,
-            required: true,
+            required: [true, 'Schema is required'],
         }
     },{
         timestamps: true 

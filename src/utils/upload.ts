@@ -3,7 +3,7 @@ import fs from 'fs';
 
 
 export const ensureUploadsDirectory = (dir: string) => {
-  const uploadsDir = path.resolve(__dirname, 'dir');
+  const uploadsDir = path.resolve(process.cwd(), dir);
 
   // Check if the directory exists
   if (!fs.existsSync(uploadsDir)) {

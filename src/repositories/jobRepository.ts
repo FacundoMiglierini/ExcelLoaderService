@@ -1,12 +1,16 @@
 import { IJobRepository } from "../interfaces/IJobRepository";
 import { Job } from "../interfaces/IJob";
 import { JobModel } from "../entities/Job";
+import { BATCH_SIZE } from "../config/config";
 
 export class JobRepository implements IJobRepository {
 
-    async create(data: Job): Promise<Job> {
+    async create(filename: string, schema: string): Promise<Job> {
 
-        const job = await JobModel.create(data);
+        const job = await JobModel.create({
+            filename: filename,
+            schema: schema
+        });
 
         return job;
     }
@@ -73,7 +77,16 @@ export class JobRepository implements IJobRepository {
         return res.acknowledged;
     }
 
-    async saveBatchErrors(id: string, errors: Object, force: boolean | undefined = false): Promise<boolean> {
+    async saveBatchErrors(id: string, errors: Object[], force: boolean | undefined = false): Promise<void> {
+
+        /*
+        if (errors.length === 0) 
+            return
+
+        if (errors.length >= BATCH_SIZE || force) {
+            await JobModel.insertMany(errors, { ordered: false} )
+        }
+        */
        
         const res = await JobModel.updateOne({ id: id }, { $push: { job_errors: { $each: errors } } });
 
@@ -82,8 +95,6 @@ export class JobRepository implements IJobRepository {
             error.name = "NotFoundError"; 
             throw error;
         }
-
-        return res.acknowledged;
     }
 
 }

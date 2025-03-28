@@ -2,7 +2,6 @@ import http from 'http';
 import express from 'express';
 
 import { server } from './config/config';
-import getFileRouter from './routes/getFileRoutes';
 import getJobStatusRouter from './routes/getJobStatusRoutes';
 import uploadFileRouter from './routes/uploadFileRoutes';
 import dbConnection from './services/Database';
@@ -20,7 +19,6 @@ export const Main = async () => {
     await brokerConsumerConnection();
 
     app.use(getJobStatusRouter);
-    app.use(getFileRouter);
     app.use(uploadFileRouter);
 
     httpServer = http.createServer(app);

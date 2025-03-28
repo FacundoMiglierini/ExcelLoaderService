@@ -1,7 +1,5 @@
-import { IFileRepository } from "../interfaces/IFileRepository";
 import { IJobRepository } from "../interfaces/IJobRepository";
 import { IUploadFileUseCase } from "../interfaces/IUploadFileUseCase";
-import { JobModel } from "../entities/Job";
 import { DataTypes, SchemaDataTypes } from "../enums/DataTypes";
 import JobStatus from "../enums/Job";
 import { publish } from "../services/Publisher";
@@ -24,28 +22,25 @@ export class UploadFileUseCase implements IUploadFileUseCase {
 
     async createJob(filename: string, schema: string) {
 
-        const processedSchema = this.generateSchema(JSON.parse(schema));
-        const jobDoc = new JobModel({
-            excel_filename: filename,
-            schema: processedSchema
-        });
-        const job = await this.jobRepository.create(jobDoc);
-        console.log(`New job with id ${jobDoc.id} created.`);
-        await publish({ id: job.id, filename: filename, schema: processedSchema});
+        const job = await this.jobRepository.create(filename, schema);
+        console.log(`New job with id ${job.id} created.`);
+        await publish(job.id, filename, schema);
 
         return job.id;
     }
 
-    async createFile(data: { jobId: string, filename: string, schema: any }) {
+    async createFile(data: { jobId: string, filename: string, schema: string}) {
 
         const { jobId, filename, schema } = data;
         const res = await this.jobRepository.updateStatus(jobId, JobStatus.PROCESSING);
+
         if (!res)
             throw new Error("File Upload process not found.");
 
-        const parsedFileSchema = new Schema({ row: { type: SchemaTypes.Number, unique: true }, ...schema });
+        const processedSchema = this.generateSchema(JSON.parse(schema));
+        const parsedFileSchema = new Schema({ row: { type: SchemaTypes.Number, unique: true }, ...processedSchema});
         const parsedFileModel = mongoose.model(filename, parsedFileSchema);
-        const ok = await this.processFile(filename, parsedFileModel, schema);
+        const ok = await this.processFile(jobId, filename, parsedFileModel, processedSchema);
 
         if (ok) {
             await this.jobRepository.updateStatus(jobId, JobStatus.DONE);
@@ -147,16 +142,17 @@ export class UploadFileUseCase implements IUploadFileUseCase {
               required,
               type
             };
-          });
+        });
 
         const data = readExcel(`${UPLOAD_DIR}/${filename}`);
         let rowIndex = 0;
 
+        const batchContent: any[] = []
+        const batchErrors: { row: number, col: number }[] = []
+
         for (const row of data) {
 
             rowIndex++;
-            const batchContent: any[] = []
-            const batchErrors: { row: number, col: number }[] = []
 
             const { newRow, rowErrors } = this.processRow(row, rowIndex, schemaAsList);
 
@@ -171,7 +167,7 @@ export class UploadFileUseCase implements IUploadFileUseCase {
         }
 
         await this.customSchemaRepository.saveBatchContent(batchContent, model, true)
-        await this.jobRepository.saveBatchErrors(batchErrors, true)
+        await this.jobRepository.saveBatchErrors(jobId, batchErrors, true)
 
         return true;
     }
