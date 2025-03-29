@@ -4,10 +4,12 @@ import { JobRepository } from '../repositories/jobRepository';
 import { Authenticate } from '../middleware/auth';
 import { GetJobStatusUseCase } from '../usecases/getJobStatusUseCase';
 import { GetJobStatusController } from '../controllers/GetJobStatusController';
+import { JobErrorRepository } from '../repositories/jobErrorRepository';
 
 
-const repository = new JobRepository();
-const useCase = new GetJobStatusUseCase(repository);
+const jobRepository = new JobRepository();
+const jobErrorRepository = new JobErrorRepository();
+const useCase = new GetJobStatusUseCase(jobRepository, jobErrorRepository);
 const controller = new GetJobStatusController(useCase);
 
 const getJobStatusRouter = express.Router();

@@ -1,13 +1,15 @@
 import { Amqp } from 'typescript-amqp';
 import { broker } from '../config/config';
 import { JobRepository } from '../repositories/jobRepository';
-import { FileRepository } from '../repositories/fileRepository';
 import { UploadFileUseCase } from '../usecases/uploadFileUseCase';
+import { CustomSchemaRepository } from '../repositories/customSchemaRepository';
+import { JobErrorRepository } from '../repositories/jobErrorRepository';
 
 
 const jobRepository = new JobRepository();
-const fileRepository = new FileRepository();
-const useCase = new UploadFileUseCase(jobRepository, fileRepository);
+const jobErrorRepository = new JobErrorRepository();
+const customSchemaRepository = new CustomSchemaRepository();
+const useCase = new UploadFileUseCase(jobRepository, jobErrorRepository, customSchemaRepository);
 
 export default async function brokerConsumerConnection() {
 
@@ -30,7 +32,7 @@ export default async function brokerConsumerConnection() {
 
         channel.consume(queue.queue, async (msg: any) => {
             if (msg.content)
-                await useCase.createFile(msg.content.toString())
+                await useCase.createFile(JSON.parse(msg.content.toString()))
             channel.ack(msg);
         }, {
             noAck: false

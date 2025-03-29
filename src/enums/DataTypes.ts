@@ -1,7 +1,11 @@
-enum DataTypes {
+export enum DataTypes {
     STRING = "string",
     NUMBER = "number",
     ARRAY = "array<number>",
 }
 
-export default DataTypes;
+export enum SchemaDataTypes {
+    STRING = "SchemaString",
+    NUMBER = "SchemaNumber",
+    ARRAY = "SchemaArray",
+}

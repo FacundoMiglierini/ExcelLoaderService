@@ -1,113 +1,132 @@
-import { IFileRepository } from "../interfaces/IFileRepository";
 import { IJobRepository } from "../interfaces/IJobRepository";
 import { IUploadFileUseCase } from "../interfaces/IUploadFileUseCase";
-import { File } from "../interfaces/IFile";
-import { FileModel } from "../entities/File";
-import { JobModel } from "../entities/Job";
-import DataTypes from "../enums/DataTypes";
+import { DataTypes, SchemaDataTypes } from "../enums/DataTypes";
 import JobStatus from "../enums/Job";
 import { publish } from "../services/Publisher";
 import { isNumber, isNumberList } from "../utils/fileProcessingUtils";
+import mongoose, { Schema, SchemaTypes } from "mongoose";
+import { ICustomSchemaRepository } from "../interfaces/ICustomSchemaRepository";
+import { readExcel } from "../utils/fileUploadingUtils";
+import { UPLOAD_DIR } from "../config/config";
+import { JobError } from "../interfaces/IJobError";
+import { IJobErrorRepository } from "../interfaces/IJobErrorRepository";
 
 
 export class UploadFileUseCase implements IUploadFileUseCase {
 
     private jobRepository: IJobRepository;
-    private fileRepository: IFileRepository;
+    private jobErrorRepository: IJobErrorRepository;
+    private customSchemaRepository: ICustomSchemaRepository;
 
-    constructor(jobRepository: IJobRepository, fileRepository: IFileRepository) {
+    constructor(jobRepository: IJobRepository, jobErrorRepository: IJobErrorRepository, customSchemaRepository: ICustomSchemaRepository) {
         this.jobRepository = jobRepository
-        this.fileRepository = fileRepository
+        this.jobErrorRepository = jobErrorRepository
+        this.customSchemaRepository = customSchemaRepository
     }
 
-    async createJob(file_content: Object, file_content_length: Number, file_schema: Object) {
+    async createJob(filename: string, schema: string) {
 
-        const jobDoc = new JobModel({
-            schema: file_schema,
-            raw_data: file_content,
-            raw_data_length: file_content_length
-        });
-        const job = await this.jobRepository.create(jobDoc);
-        console.log(`New job with id ${jobDoc.id} created.`)
-        await publish(job.id);
+        const job = await this.jobRepository.create(filename, schema);
+        console.log(`New job with id ${job.id} created.`);
+        await publish(job.id, filename, schema);
 
         return job.id;
     }
 
-    async createFile(jobId: string) {
+    async createFile(data: { jobId: string, filename: string, schema: string}) {
 
+        const { jobId, filename, schema } = data;
         const res = await this.jobRepository.updateStatus(jobId, JobStatus.PROCESSING);
+
         if (!res)
             throw new Error("File Upload process not found.");
 
-        const newFile: File = new FileModel({
-            job_id: jobId,
-        })
-        await this.fileRepository.create(newFile)
-        await this.jobRepository.updateFileRef(jobId, newFile.id);
-        const ok = await this.processFile(jobId, newFile.id);
+        const processedSchema = this.generateSchema(JSON.parse(schema));
+        const parsedFileSchema = new Schema({ row: { type: SchemaTypes.Number, unique: true }, ...processedSchema});
+        const parsedFileModel = mongoose.model(filename, parsedFileSchema);
+        const ok = await this.processFile(jobId, filename, parsedFileModel, processedSchema);
+
         if (ok) {
             await this.jobRepository.updateStatus(jobId, JobStatus.DONE);
             console.log(`File processed successfully.`);
         }
     }
 
-    private validateSchema(format: { [key: string]: string }, processedSchema: { column: string, nullable: boolean, dataType: string}[]) {
+    private generateSchema(format: { [key: string]: string }) {
+        const processedSchema: { [key: string]: { type: any, required: boolean } } = {};
+
         Object.entries(format).forEach(([key, value]) => {
             if (typeof key !== "string") 
                 throw new Error("Incompatible file schema: column names must be strings.")
 
-            const isNullable = key.toString().endsWith("?");
-            const columnName = isNullable ? key.toString().slice(0, -1) : key.toString();
-            const dataType = value.toLowerCase();
+            const isRequired = !key.toString().endsWith("?");
+            const columnName = isRequired ? key.toString() : key.toString().slice(0, -1);
+            var dataType: any = '';            
+            switch (value.toLowerCase()) {
+                case DataTypes.STRING:
+                    dataType = SchemaTypes.String;
+                    break;
+                case DataTypes.NUMBER:
+                    dataType = SchemaTypes.Number;
+                    break;
+                case DataTypes.ARRAY:
+                    dataType = SchemaTypes.Array; 
+                    break;
+                default:
+                    const error: Error = new Error("Incompatible file schema: incorrect data type.");
+                    error.name = "BadRequestError";
+                    throw error;
+            }
 
-            processedSchema.push({
-                column: columnName,
-                nullable: isNullable,
-                dataType: dataType,
-            })
+            processedSchema[columnName] = {
+                type: dataType,
+                required: isRequired
+            }
         });
+
+        return processedSchema;
     }
 
-
-    private processRow(row: any, rowIndex: number, processedSchema: any[]) {
+    private processRow(jobId: string, row: any, rowIndex: number, schema: any[]) {
         const newRow: any = {}
-        const rowErrors: { row: number; col: number}[] = []
+        const rowErrors: JobError[] = []
+        newRow["row"] = rowIndex
 
-        for (let i = 0; i < processedSchema.length; i++) {
+        for (let i = 0; i < schema.length; i++) {
             try {
                 const cell = row[i]; 
-                if (cell === null && !processedSchema[i]["nullable"]) {
+                if ((cell === null || cell === '' || cell === 'undefined') && schema[i]["required"]) {
                     throw new Error("Null cell within not nullable column.") 
                 } else {
                     var formattedCell;
                     if (cell === null) {
                         continue;
                     } else {
-                        switch (processedSchema[i]["dataType"]) {
-                            case DataTypes.STRING:
+                        switch (schema[i]["type"] as string) {
+                            case SchemaDataTypes.STRING:
                                 if (isNumber(cell) || isNumberList(cell))
                                     throw new Error(`Cannot convert '${cell}' to a String: it is a Number or Array<Number>.`);
                                 formattedCell = cell.toString();
                                 break;
-                            case DataTypes.NUMBER:
+                            case SchemaDataTypes.NUMBER:
                                 if (!isNumber(cell))
                                     throw new Error(`Cannot convert '${cell}' to a Number.`);
                                 formattedCell = Number(cell);
                                 break;
-                            case DataTypes.ARRAY: 
+                            case SchemaDataTypes.ARRAY: 
                                 if (!isNumberList(cell.toString()))
                                     throw new Error(`Cannot convert '${cell}' to an Array<Number>.`)
-                                const numbers = cell.toString().split(',').map(Number); 
+                                const numbers = cell.toString().split(',').filter((val: string) => val.trim() !== '').map(Number);
                                 formattedCell = numbers.sort((a: number, b: number) => a - b);
                                 break;
                         }
                     }
-                    newRow[processedSchema[i]["column"]] = formattedCell
+                    newRow[schema[i]["column"]] = formattedCell
                 }
             } catch (error) {
                 rowErrors.push({
-                    row: rowIndex + 1,
+                    job_id: jobId,
+                    row: rowIndex,
                     col: i + 1
                 })
             }
@@ -116,42 +135,42 @@ export class UploadFileUseCase implements IUploadFileUseCase {
         return { newRow, rowErrors };
     }
 
-    private async processFile (jobId: string, fileId: string) {
+    private async processFile (jobId: string, filename: string, model: any, schema: { [key: string] : { type: string, required: boolean } }) {
 
-        const format: any = await this.jobRepository.findSchema(jobId);
-        const processedSchema: { column: string, nullable: boolean, dataType: string }[] = []
-        this.validateSchema(format, processedSchema)
+        const schemaAsList = Object.keys(schema).map(key => {
+            //@ts-ignore
+            const type = schema[key].type.name; 
+            const required = schema[key].required;
 
-        const data_length = await this.jobRepository.findRawDataLength(jobId);
+            return {
+              column: key,
+              required,
+              type
+            };
+        });
 
-        const batchSize = 2048
-        const batches = Math.ceil(data_length / batchSize);
+        const data = readExcel(`${UPLOAD_DIR}/${filename}`);
+        let rowIndex = 0;
+        const batchContent: any[] = []
+        const batchErrors: JobError[] = []
 
-        for (let batchIndex = 0; batchIndex < batches; batchIndex++) {
+        for (const row of data) {
 
-            const batchContent: typeof processedSchema[] = []
-            const batchErrors: { row: number; col: number}[] = []
-            const start = batchIndex * batchSize;
-            const batch = await this.jobRepository.findRawData(jobId, batchIndex + 1, batchSize);
+            rowIndex++;
+            const { newRow, rowErrors } = this.processRow(jobId, row, rowIndex, schemaAsList);
 
-            batch.forEach((row: any, rowIndex: number) => {
-                const { newRow, rowErrors } = this.processRow(row, rowIndex + start + 1, processedSchema);
-
-                if (rowErrors.length === 0)
-                    batchContent.push(newRow)
-
+            if (rowErrors.length > 0) {
                 batchErrors.push(...rowErrors);
-            });
-
-            const [receivedData, receivedErrors] = await Promise.all([
-                this.fileRepository.updateContent(fileId, batchContent),
-                this.jobRepository.updateErrors(jobId, batchErrors)
-            ]);
-
-            if (!receivedData || !receivedErrors) {
-                throw new Error("Interrupted data loading.")
+                await this.jobErrorRepository.saveMany(batchErrors);
+                continue
             }
+
+            batchContent.push(newRow);
+            await this.customSchemaRepository.saveMany(batchContent, model);
         }
+
+        await this.jobErrorRepository.saveMany(batchErrors, true)
+        await this.customSchemaRepository.saveMany(batchContent, model, true)
 
         return true;
     }

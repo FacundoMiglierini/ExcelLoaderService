@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import XLSX from 'xlsx';
 
 import { IUploadFileUseCase } from "../interfaces/IUploadFileUseCase";
 
@@ -14,31 +13,20 @@ export class UploadFileController {
 
     async onCreateJob(req: Request, res: Response) {
         try {
-            const { file_content } = req.files as { [key: string]: Express.Multer.File[] };
-
-            if (!file_content || !req.body.file_schema) {
-                const error: any = new Error("Missing required fields: file_content and/or file_schema");
-                error.name = "MissingFieldError"; 
+            if (!req.file) {
+                const error: any = new Error("Please upload an Excel file");
+                error.name = "MissingFieldError";
                 throw error;
-            } 
+            }
 
-            // Process Excel
-            const excelBuffer = file_content[0]?.buffer;
-            const workbook = XLSX.read(excelBuffer);
-            const sheetName = workbook.SheetNames[0];
-            const excelData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
-              header: 1,
-              raw: true,
-              blankrows: true,
-              defval: null,
-              rawNumbers: true
-            }).slice(1);
+            const filename = req.file.filename;
+            const schema = req.body.file_schema;
+            const jobId = await this.useCase.createJob(filename, schema);
 
-            // Process schema
-            const schema = JSON.parse(req.body.file_schema.toString());
-            const jobId = await this.useCase.createJob(excelData, excelData.length, schema);
-
-            return res.status(202).json({"job_id": jobId});
+            return res.status(202).json({
+                message: 'File uploaded successfully',
+                "job_id": jobId
+            });
 
         } catch(error: any) {
             if (error.name === "MissingFieldError") {

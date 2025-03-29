@@ -1,23 +1,28 @@
+import JobStatus from "../enums/Job";
 import { IGetJobStatusUseCase } from "../interfaces/IGetJobStatusUseCase";
+import { IJobErrorRepository } from "../interfaces/IJobErrorRepository";
 import { IJobRepository } from "../interfaces/IJobRepository";
 
 export class GetJobStatusUseCase implements IGetJobStatusUseCase {
 
-    private repository: IJobRepository;
+    private jobRepository: IJobRepository;
+    private jobErrorRepository: IJobErrorRepository;
 
-    constructor(repository: IJobRepository) {
-        this.repository = repository
+    constructor(jobRepository: IJobRepository, jobErrorRepository: IJobErrorRepository) {
+        this.jobRepository = jobRepository
+        this.jobErrorRepository = jobErrorRepository
     }
 
     async getJobStatus(id: string, page: number, limit: number ) {
 
-        const job = await this.repository.findStatus(id, page, limit);
+        const job = await this.jobRepository.find(id);
+        const errors = await this.jobErrorRepository.find(id, page, limit);
 
         return {
             id: job.id,
             status: job.status,
-            ...(job.file_id !== null && { file_id: job.file_id }),
-            errors: job.job_errors,
+            ...(job.status === JobStatus.DONE && { file_collection: job.filename }),
+            errors: errors,
         }
     }
 
