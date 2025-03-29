@@ -1,8 +1,10 @@
+import { injectable } from "inversify";
 import { BATCH_SIZE } from "../config/config";
 import { JobErrorModel } from "../entities/JobError";
 import { JobError } from "../interfaces/IJobError";
 import { IJobErrorRepository } from "../interfaces/IJobErrorRepository";
 
+@injectable()
 export class JobErrorRepository implements IJobErrorRepository {
 
 

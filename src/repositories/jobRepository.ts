@@ -1,7 +1,10 @@
+import { injectable } from "inversify";
+
 import { IJobRepository } from "../interfaces/IJobRepository";
 import { Job } from "../interfaces/IJob";
 import { JobModel } from "../entities/Job";
 
+@injectable()
 export class JobRepository implements IJobRepository {
 
     async create(filename: string, schema: string): Promise<Job> {

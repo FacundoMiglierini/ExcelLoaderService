@@ -1,5 +1,6 @@
 import http from 'http';
 import express from 'express';
+import "reflect-metadata";
 
 import { server } from './config/config';
 import getJobStatusRouter from './routes/getJobStatusRoutes';

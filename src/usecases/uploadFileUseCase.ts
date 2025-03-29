@@ -1,3 +1,5 @@
+import { inject, injectable } from "inversify";
+
 import { IJobRepository } from "../interfaces/IJobRepository";
 import { IUploadFileUseCase } from "../interfaces/IUploadFileUseCase";
 import { DataTypes, SchemaDataTypes } from "../enums/DataTypes";
@@ -7,18 +9,23 @@ import { isNumber, isNumberList } from "../utils/fileProcessingUtils";
 import mongoose, { Schema, SchemaTypes } from "mongoose";
 import { ICustomSchemaRepository } from "../interfaces/ICustomSchemaRepository";
 import { readExcel } from "../utils/fileUploadingUtils";
-import { UPLOAD_DIR } from "../config/config";
+import { INTERFACE_TYPE, UPLOAD_DIR } from "../config/config";
 import { JobError } from "../interfaces/IJobError";
 import { IJobErrorRepository } from "../interfaces/IJobErrorRepository";
 
 
+@injectable()
 export class UploadFileUseCase implements IUploadFileUseCase {
 
     private jobRepository: IJobRepository;
     private jobErrorRepository: IJobErrorRepository;
     private customSchemaRepository: ICustomSchemaRepository;
 
-    constructor(jobRepository: IJobRepository, jobErrorRepository: IJobErrorRepository, customSchemaRepository: ICustomSchemaRepository) {
+    constructor(
+        @inject(INTERFACE_TYPE.JobRepository) jobRepository: IJobRepository, 
+        @inject(INTERFACE_TYPE.JobErrorRepository) jobErrorRepository: IJobErrorRepository, 
+        @inject(INTERFACE_TYPE.CustomSchemaRepository) customSchemaRepository: ICustomSchemaRepository
+    ) {
         this.jobRepository = jobRepository
         this.jobErrorRepository = jobErrorRepository
         this.customSchemaRepository = customSchemaRepository

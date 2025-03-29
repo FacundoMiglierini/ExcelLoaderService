@@ -1,15 +1,24 @@
+import { Container } from 'inversify';
 import { Amqp } from 'typescript-amqp';
-import { broker } from '../config/config';
+import { broker, INTERFACE_TYPE } from '../config/config';
 import { JobRepository } from '../repositories/jobRepository';
 import { UploadFileUseCase } from '../usecases/uploadFileUseCase';
 import { CustomSchemaRepository } from '../repositories/customSchemaRepository';
 import { JobErrorRepository } from '../repositories/jobErrorRepository';
+import { IJobRepository } from '../interfaces/IJobRepository';
+import { IJobErrorRepository } from '../interfaces/IJobErrorRepository';
+import { ICustomSchemaRepository } from '../interfaces/ICustomSchemaRepository';
+import { IUploadFileUseCase } from '../interfaces/IUploadFileUseCase';
 
 
-const jobRepository = new JobRepository();
-const jobErrorRepository = new JobErrorRepository();
-const customSchemaRepository = new CustomSchemaRepository();
-const useCase = new UploadFileUseCase(jobRepository, jobErrorRepository, customSchemaRepository);
+const container = new Container();
+
+container.bind<IJobRepository>(INTERFACE_TYPE.JobRepository).to(JobRepository);
+container.bind<IJobErrorRepository>(INTERFACE_TYPE.JobErrorRepository).to(JobErrorRepository);
+container.bind<ICustomSchemaRepository>(INTERFACE_TYPE.CustomSchemaRepository).to(CustomSchemaRepository);
+container.bind<IUploadFileUseCase>(INTERFACE_TYPE.UploadFileUseCase).to(UploadFileUseCase);
+
+const useCase = container.get<UploadFileUseCase>(INTERFACE_TYPE.UploadFileUseCase);
 
 export default async function brokerConsumerConnection() {
 

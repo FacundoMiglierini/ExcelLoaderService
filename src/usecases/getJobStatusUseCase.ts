@@ -1,14 +1,21 @@
+import { inject, injectable } from "inversify";
+
 import JobStatus from "../enums/Job";
 import { IGetJobStatusUseCase } from "../interfaces/IGetJobStatusUseCase";
 import { IJobErrorRepository } from "../interfaces/IJobErrorRepository";
 import { IJobRepository } from "../interfaces/IJobRepository";
+import { INTERFACE_TYPE } from "../config/config";
 
+@injectable()
 export class GetJobStatusUseCase implements IGetJobStatusUseCase {
 
     private jobRepository: IJobRepository;
     private jobErrorRepository: IJobErrorRepository;
 
-    constructor(jobRepository: IJobRepository, jobErrorRepository: IJobErrorRepository) {
+    constructor(
+        @inject(INTERFACE_TYPE.JobRepository) jobRepository: IJobRepository, 
+        @inject(INTERFACE_TYPE.JobErrorRepository) jobErrorRepository: IJobErrorRepository
+    ) {
         this.jobRepository = jobRepository
         this.jobErrorRepository = jobErrorRepository
     }

@@ -1,6 +1,9 @@
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import { ensureUploadsDirectory } from '../utils/upload';
+import { GetJobStatusController } from '../controllers/GetJobStatusController';
+import { UploadFileUseCase } from '../usecases/uploadFileUseCase';
+import { CustomSchemaRepository } from '../repositories/customSchemaRepository';
 
 dotenv.config();
 
@@ -29,6 +32,17 @@ export const UPLOAD_DIR = './uploads';
 ensureUploadsDirectory(UPLOAD_DIR);
 
 export const BATCH_SIZE = 1024;
+
+
+export const INTERFACE_TYPE = {
+    JobRepository: Symbol.for("JobRepository"),
+    JobErrorRepository: Symbol.for("JobErrorRepository"),
+    CustomSchemaRepository: Symbol.for("CustomSchemaRepository"),
+    GetJobStatusUseCase: Symbol.for("GetJobStatusUseCase"),
+    UploadFileUseCase: Symbol.for("UploadFileUseCase"),
+    GetJobStatusController: Symbol.for("GetJobStatusController"),
+    UploadFileController: Symbol.for("UploadFileController"),
+}
 
 export const database = {
     DATABASE_USERNAME,

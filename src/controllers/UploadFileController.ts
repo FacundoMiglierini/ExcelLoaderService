@@ -1,13 +1,17 @@
 import { Request, Response } from "express";
+import { inject, injectable } from "inversify";
 
 import { IUploadFileUseCase } from "../interfaces/IUploadFileUseCase";
+import { INTERFACE_TYPE } from "../config/config";
 
-
+@injectable()
 export class UploadFileController {
 
     private useCase: IUploadFileUseCase
 
-    constructor(useCase: IUploadFileUseCase) {
+    constructor(
+        @inject(INTERFACE_TYPE.UploadFileUseCase) useCase: IUploadFileUseCase
+    ) {
         this.useCase = useCase;
     }
 
@@ -29,6 +33,7 @@ export class UploadFileController {
             });
 
         } catch(error: any) {
+            console.error(error)
             if (error.name === "MissingFieldError") {
                 return res.status(400).json({ message: error.message });
             }
