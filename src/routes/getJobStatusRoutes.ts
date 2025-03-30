@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { Container } from 'inversify';
 
 import { JobRepository } from '../repositories/jobRepository';
@@ -24,7 +24,7 @@ getJobStatusRouter.use(Authenticate)
 
 const controller = container.get<GetJobStatusController>(INTERFACE_TYPE.GetJobStatusController)
 
-getJobStatusRouter.get("/jobs/:id", async (req, res) => {
+getJobStatusRouter.get("/jobs/:id", async (req: Request, res: Response) => {
     await controller.onGetJobStatus(req, res);
 });
 

@@ -22,6 +22,11 @@ export class UploadFileController {
                 error.name = "MissingFieldError";
                 throw error;
             }
+            if (!req.body.file_schema) {
+                const error: any = new Error("Please upload a file schema");
+                error.name = "MissingFieldError";
+                throw error;
+            }
 
             const filename = req.file.filename;
             const schema = req.body.file_schema;

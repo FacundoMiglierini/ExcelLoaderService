@@ -1,8 +1,8 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { Container } from 'inversify';
 
 import { Authenticate } from '../middleware/auth';
-import { upload } from '../middleware/multer';
+import { multerErrorHandler , upload } from '../middleware/multer';
 import { IJobRepository } from '../interfaces/IJobRepository';
 import { INTERFACE_TYPE } from '../config/config';
 import { JobRepository } from '../repositories/jobRepository';
@@ -28,7 +28,7 @@ uploadFileRouter.use(Authenticate);
 
 const controller = container.get<UploadFileController>(INTERFACE_TYPE.UploadFileController);
 
-uploadFileRouter.post("/files", upload.single('file_content'), async (req, res) => {
+uploadFileRouter.post("/files", upload.single('file_content'), multerErrorHandler, async (req: Request, res: Response) => {
     await controller.onCreateJob(req, res);
 });
 
