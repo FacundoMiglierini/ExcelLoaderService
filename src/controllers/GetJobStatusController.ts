@@ -1,12 +1,17 @@
 import { Request, Response } from "express";
+import { inject, injectable } from "inversify";
+
 import { IGetJobStatusUseCase } from "../interfaces/IGetJobStatusUseCase";
+import { INTERFACE_TYPE } from "../config/config";
 
-
+@injectable()
 export class GetJobStatusController {
 
     private useCase: IGetJobStatusUseCase
 
-    constructor(useCase: IGetJobStatusUseCase) {
+    constructor(
+        @inject(INTERFACE_TYPE.GetJobStatusUseCase) useCase: IGetJobStatusUseCase
+    ) {
         this.useCase = useCase;
     }
 
@@ -25,6 +30,7 @@ export class GetJobStatusController {
 
             return res.status(200).json(data);
         } catch(error: any) {
+            console.error(error)
             if (error.name === "NotFoundError") {
                 return res.status(404).json({ message: error.message });
             }

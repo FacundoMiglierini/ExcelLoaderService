@@ -30,6 +30,17 @@ ensureUploadsDirectory(UPLOAD_DIR);
 
 export const BATCH_SIZE = 1024;
 
+
+export const INTERFACE_TYPE = {
+    JobRepository: Symbol.for("JobRepository"),
+    JobErrorRepository: Symbol.for("JobErrorRepository"),
+    CustomModelRepository: Symbol.for("CustomModelRepository"),
+    GetJobStatusUseCase: Symbol.for("GetJobStatusUseCase"),
+    UploadFileUseCase: Symbol.for("UploadFileUseCase"),
+    GetJobStatusController: Symbol.for("GetJobStatusController"),
+    UploadFileController: Symbol.for("UploadFileController"),
+}
+
 export const database = {
     DATABASE_USERNAME,
     DATABASE_PASSWORD,

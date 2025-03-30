@@ -1,39 +1,46 @@
+import { inject, injectable } from "inversify";
+
 import { IJobRepository } from "../interfaces/IJobRepository";
 import { IUploadFileUseCase } from "../interfaces/IUploadFileUseCase";
-import { DataTypes, SchemaDataTypes } from "../enums/DataTypes";
 import JobStatus from "../enums/Job";
 import { publish } from "../services/Publisher";
-import { isNumber, isNumberList } from "../utils/fileProcessingUtils";
-import mongoose, { Schema, SchemaTypes } from "mongoose";
-import { ICustomSchemaRepository } from "../interfaces/ICustomSchemaRepository";
+import { schemaAsList, schemaAsDict, isCellInvalid, formatCell } from "../utils/fileProcessingUtils";
+import { ICustomModelRepository } from "../interfaces/ICustomModelRepository";
 import { readExcel } from "../utils/fileUploadingUtils";
-import { UPLOAD_DIR } from "../config/config";
+import { INTERFACE_TYPE, UPLOAD_DIR } from "../config/config";
 import { JobError } from "../interfaces/IJobError";
 import { IJobErrorRepository } from "../interfaces/IJobErrorRepository";
+import { Model } from "mongoose";
 
 
+@injectable()
 export class UploadFileUseCase implements IUploadFileUseCase {
 
     private jobRepository: IJobRepository;
     private jobErrorRepository: IJobErrorRepository;
-    private customSchemaRepository: ICustomSchemaRepository;
+    private customModelRepository: ICustomModelRepository;
 
-    constructor(jobRepository: IJobRepository, jobErrorRepository: IJobErrorRepository, customSchemaRepository: ICustomSchemaRepository) {
+    constructor(
+        @inject(INTERFACE_TYPE.JobRepository) jobRepository: IJobRepository, 
+        @inject(INTERFACE_TYPE.JobErrorRepository) jobErrorRepository: IJobErrorRepository, 
+        @inject(INTERFACE_TYPE.CustomModelRepository) customModelRepository: ICustomModelRepository
+    ) {
         this.jobRepository = jobRepository
         this.jobErrorRepository = jobErrorRepository
-        this.customSchemaRepository = customSchemaRepository
+        this.customModelRepository = customModelRepository
     }
 
     async createJob(filename: string, schema: string) {
 
+        const validatedSchema = schemaAsDict(JSON.parse(schema));
         const job = await this.jobRepository.create(filename, schema);
         console.log(`New job with id ${job.id} created.`);
-        await publish(job.id, filename, schema);
+        await publish(job.id, filename, validatedSchema);
 
         return job.id;
     }
 
-    async createFile(data: { jobId: string, filename: string, schema: string}) {
+    async saveFile(data: { jobId: string, filename: string, schema: any}) {
 
         const { jobId, filename, schema } = data;
         const res = await this.jobRepository.updateStatus(jobId, JobStatus.PROCESSING);
@@ -41,10 +48,8 @@ export class UploadFileUseCase implements IUploadFileUseCase {
         if (!res)
             throw new Error("File Upload process not found.");
 
-        const processedSchema = this.generateSchema(JSON.parse(schema));
-        const parsedFileSchema = new Schema({ row: { type: SchemaTypes.Number, unique: true }, ...processedSchema});
-        const parsedFileModel = mongoose.model(filename, parsedFileSchema);
-        const ok = await this.processFile(jobId, filename, parsedFileModel, processedSchema);
+        const model = await this.customModelRepository.create(filename, schema);
+        const ok = await this.processFile(jobId, filename, model, schema);
 
         if (ok) {
             await this.jobRepository.updateStatus(jobId, JobStatus.DONE);
@@ -52,103 +57,44 @@ export class UploadFileUseCase implements IUploadFileUseCase {
         }
     }
 
-    private generateSchema(format: { [key: string]: string }) {
-        const processedSchema: { [key: string]: { type: any, required: boolean } } = {};
-
-        Object.entries(format).forEach(([key, value]) => {
-            if (typeof key !== "string") 
-                throw new Error("Incompatible file schema: column names must be strings.")
-
-            const isRequired = !key.toString().endsWith("?");
-            const columnName = isRequired ? key.toString() : key.toString().slice(0, -1);
-            var dataType: any = '';            
-            switch (value.toLowerCase()) {
-                case DataTypes.STRING:
-                    dataType = SchemaTypes.String;
-                    break;
-                case DataTypes.NUMBER:
-                    dataType = SchemaTypes.Number;
-                    break;
-                case DataTypes.ARRAY:
-                    dataType = SchemaTypes.Array; 
-                    break;
-                default:
-                    const error: Error = new Error("Incompatible file schema: incorrect data type.");
-                    error.name = "BadRequestError";
-                    throw error;
-            }
-
-            processedSchema[columnName] = {
-                type: dataType,
-                required: isRequired
-            }
-        });
-
-        return processedSchema;
-    }
-
     private processRow(jobId: string, row: any, rowIndex: number, schema: any[]) {
-        const newRow: any = {}
-        const rowErrors: JobError[] = []
-        newRow["row"] = rowIndex
 
-        for (let i = 0; i < schema.length; i++) {
+        const newRow: any = { row: rowIndex };
+        const rowErrors: JobError[] = [];
+
+        schema.forEach((columnSchema, index) => {
             try {
-                const cell = row[i]; 
-                if ((cell === null || cell === '' || cell === 'undefined') && schema[i]["required"]) {
-                    throw new Error("Null cell within not nullable column.") 
-                } else {
-                    var formattedCell;
-                    if (cell === null) {
-                        continue;
-                    } else {
-                        switch (schema[i]["type"] as string) {
-                            case SchemaDataTypes.STRING:
-                                if (isNumber(cell) || isNumberList(cell))
-                                    throw new Error(`Cannot convert '${cell}' to a String: it is a Number or Array<Number>.`);
-                                formattedCell = cell.toString();
-                                break;
-                            case SchemaDataTypes.NUMBER:
-                                if (!isNumber(cell))
-                                    throw new Error(`Cannot convert '${cell}' to a Number.`);
-                                formattedCell = Number(cell);
-                                break;
-                            case SchemaDataTypes.ARRAY: 
-                                if (!isNumberList(cell.toString()))
-                                    throw new Error(`Cannot convert '${cell}' to an Array<Number>.`)
-                                const numbers = cell.toString().split(',').filter((val: string) => val.trim() !== '').map(Number);
-                                formattedCell = numbers.sort((a: number, b: number) => a - b);
-                                break;
-                        }
-                    }
-                    newRow[schema[i]["column"]] = formattedCell
+                const cell = row[index];
+                const columnName = columnSchema["column"];
+                const required = columnSchema["required"];
+                const type = columnSchema["type"];
+
+                if (isCellInvalid(cell, required)) {
+                    throw new Error("Null cell within not nullable column.");
+                } 
+
+                let formattedCell = formatCell(cell, type);
+
+                if (formattedCell !== undefined) {
+                    newRow[columnName] = formattedCell;
                 }
+
             } catch (error) {
+                console.error(error);
                 rowErrors.push({
                     job_id: jobId,
                     row: rowIndex,
-                    col: i + 1
-                })
+                    col: index + 1
+                });
             }
-        }
+        });
 
         return { newRow, rowErrors };
     }
 
-    private async processFile (jobId: string, filename: string, model: any, schema: { [key: string] : { type: string, required: boolean } }) {
+    private async processFile (jobId: string, filename: string, model: Model<any>, schema: { [key: string] : { type: string, required: boolean } }) {
 
-        const schemaAsList = Object.keys(schema).map(key => {
-            //@ts-ignore
-            const type = schema[key].type.name; 
-            const required = schema[key].required;
-
-            return {
-              column: key,
-              required,
-              type
-            };
-        });
-
+        const parsedSchema = schemaAsList(schema);
         const data = readExcel(`${UPLOAD_DIR}/${filename}`);
         let rowIndex = 0;
         const batchContent: any[] = []
@@ -157,7 +103,7 @@ export class UploadFileUseCase implements IUploadFileUseCase {
         for (const row of data) {
 
             rowIndex++;
-            const { newRow, rowErrors } = this.processRow(jobId, row, rowIndex, schemaAsList);
+            const { newRow, rowErrors } = this.processRow(jobId, row, rowIndex, parsedSchema);
 
             if (rowErrors.length > 0) {
                 batchErrors.push(...rowErrors);
@@ -166,11 +112,11 @@ export class UploadFileUseCase implements IUploadFileUseCase {
             }
 
             batchContent.push(newRow);
-            await this.customSchemaRepository.saveMany(batchContent, model);
+            await this.customModelRepository.saveMany(batchContent, model);
         }
 
         await this.jobErrorRepository.saveMany(batchErrors, true)
-        await this.customSchemaRepository.saveMany(batchContent, model, true)
+        await this.customModelRepository.saveMany(batchContent, model, true)
 
         return true;
     }

@@ -5,7 +5,7 @@ export enum DataTypes {
 }
 
 export enum SchemaDataTypes {
-    STRING = "SchemaString",
-    NUMBER = "SchemaNumber",
-    ARRAY = "SchemaArray",
+    STRING = "String",
+    NUMBER = "Number",
+    ARRAY = "Array",
 }

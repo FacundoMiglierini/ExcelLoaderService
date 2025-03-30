@@ -1,18 +1,12 @@
-import { Amqp } from 'typescript-amqp';
 import { broker } from '../config/config';
+import { startChannel } from '../utils/rabbitUtils';
 
 
 async function publish(id: string, filename: string, schema: any) {
 
-    const amqp = new Amqp();
-    const connection = await amqp.connect(broker.URI); 
-    const channel = await connection.createChannel()
-    await channel.assertExchange(broker.BROKER_EXCHANGE, 'fanout', {
-      durable: false
-    });
-
+    const channel = await startChannel();
+    channel.publish(broker.BROKER_EXCHANGE, '', Buffer.from(JSON.stringify({ jobId: id, filename: filename, schema: schema })));
     console.debug(`Msg published.`)
-    await channel.publish(broker.BROKER_EXCHANGE, '', Buffer.from(JSON.stringify({ jobId: id, filename: filename, schema: schema })));
 }
 
 export { publish };
