@@ -30,7 +30,7 @@ export class UploadFileController {
 
             const filename = req.file.filename;
             const schema = req.body.file_schema;
-            const jobId = await this.useCase.createJob(filename, schema);
+            const jobId = await this.useCase.uploadFile(filename, schema);
 
             return res.status(202).json({
                 message: 'File uploaded successfully',

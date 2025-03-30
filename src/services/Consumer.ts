@@ -2,14 +2,14 @@ import { Container } from 'inversify';
 
 import { broker, INTERFACE_TYPE } from '../config/config';
 import { JobRepository } from '../repositories/jobRepository';
-import { UploadFileUseCase } from '../usecases/uploadFileUseCase';
 import { CustomModelRepository } from '../repositories/customModelRepository';
 import { JobErrorRepository } from '../repositories/jobErrorRepository';
 import { IJobRepository } from '../interfaces/IJobRepository';
 import { IJobErrorRepository } from '../interfaces/IJobErrorRepository';
 import { ICustomModelRepository } from '../interfaces/ICustomModelRepository';
-import { IUploadFileUseCase } from '../interfaces/IUploadFileUseCase';
 import { startChannel } from '../utils/rabbitUtils';
+import { IProcessFileUseCase } from '../interfaces/IProcessFileUseCase';
+import { ProcessFileUseCase } from '../usecases/processFileUseCase';
 
 
 const container = new Container();
@@ -17,9 +17,9 @@ const container = new Container();
 container.bind<IJobRepository>(INTERFACE_TYPE.JobRepository).to(JobRepository);
 container.bind<IJobErrorRepository>(INTERFACE_TYPE.JobErrorRepository).to(JobErrorRepository);
 container.bind<ICustomModelRepository>(INTERFACE_TYPE.CustomModelRepository).to(CustomModelRepository);
-container.bind<IUploadFileUseCase>(INTERFACE_TYPE.UploadFileUseCase).to(UploadFileUseCase);
+container.bind<IProcessFileUseCase>(INTERFACE_TYPE.ProcessFileUseCase).to(ProcessFileUseCase);
 
-const useCase = container.get<UploadFileUseCase>(INTERFACE_TYPE.UploadFileUseCase);
+const useCase = container.get<ProcessFileUseCase>(INTERFACE_TYPE.ProcessFileUseCase);
 
 export default async function brokerConsumerConnection() {
 
@@ -33,7 +33,7 @@ export default async function brokerConsumerConnection() {
         await channel.bindQueue(queue.queue, broker.BROKER_EXCHANGE, '');
         channel.consume(queue.queue, async (msg: any) => {
             if (msg.content)
-                await useCase.saveFile(JSON.parse(msg.content.toString()))
+                await useCase.processFile(JSON.parse(msg.content.toString()))
             channel.ack(msg);
         }, {
             noAck: false

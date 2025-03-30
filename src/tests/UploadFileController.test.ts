@@ -6,15 +6,11 @@ import { upload } from "../middleware/multer";
 
 // Mock the IUploadFileUseCase
 class MockUploadFileUseCase implements IUploadFileUseCase {
-    async createJob(filename: string, schema: string) {
+    async uploadFile(filename: string, schema: string) {
         if (filename && schema) {
             return "job-id-123"; // Mock the job ID for a successful job creation
         }
         throw { name: "MissingFieldError", message: "Missing required fields: filename and/or schema" };
-    }
-
-    async saveFile(data: { jobId: string, filename: string, schema: any}) {
-        throw Error("not implemented");
     }
 }
 

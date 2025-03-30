@@ -37,6 +37,7 @@ export const INTERFACE_TYPE = {
     CustomModelRepository: Symbol.for("CustomModelRepository"),
     GetJobStatusUseCase: Symbol.for("GetJobStatusUseCase"),
     UploadFileUseCase: Symbol.for("UploadFileUseCase"),
+    ProcessFileUseCase: Symbol.for("ProcessFileUseCase"),
     GetJobStatusController: Symbol.for("GetJobStatusController"),
     UploadFileController: Symbol.for("UploadFileController"),
 }
