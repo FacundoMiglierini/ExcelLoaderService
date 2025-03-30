@@ -71,7 +71,7 @@ export class UploadFileUseCase implements IUploadFileUseCase {
 
                 if (isCellInvalid(cell, required)) {
                     throw new Error("Null cell within not nullable column.");
-                }
+                } 
 
                 let formattedCell = formatCell(cell, type);
 

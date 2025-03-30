@@ -6,7 +6,7 @@ export function mapToMongooseSchema(definition: { [key: string]: { type: SchemaD
     const typeMap: { [key in SchemaDataTypes]: any } = {
         [SchemaDataTypes.STRING]: SchemaTypes.String,
         [SchemaDataTypes.NUMBER]: SchemaTypes.Number,
-        [SchemaDataTypes.ARRAY]: SchemaTypes.Array,
+        [SchemaDataTypes.ARRAY]: [SchemaTypes.Number],
     };
 
     const schemaDefinition: { [key: string]: any } = {};
@@ -31,10 +31,8 @@ export function isNumber(value: string): boolean {
 }
 
 export function schemaAsList(schema: { [key: string] : { type: string, required: boolean } }) {
-
     return Object.keys(schema).map(key => {
-        //@ts-ignore
-        const type = schema[key].type.name; 
+        const type = schema[key].type; 
         const required = schema[key].required;
 
         return {
