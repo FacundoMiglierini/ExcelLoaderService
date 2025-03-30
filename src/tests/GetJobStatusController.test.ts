@@ -1,5 +1,5 @@
-import request from "supertest";
-import express from "express";
+import request from 'supertest';
+import express from 'express';
 import { GetJobStatusController } from "../controllers/GetJobStatusController";
 import { IGetJobStatusUseCase } from "../interfaces/IGetJobStatusUseCase";
 import JobStatus from "../enums/Job";
@@ -25,16 +25,27 @@ class MockGetJobStatusUseCase implements IGetJobStatusUseCase {
 }
 
 describe('GetJobStatusController', () => {
-    let app: express.Express;
-    let getJobStatusController: GetJobStatusController;
+    const app = express();
 
+    let getJobStatusController: GetJobStatusController;
+    let consoleErrorSpy: jest.SpyInstance<void>;
+
+    // Setup before each test
     beforeEach(() => {
-        app = express();
         getJobStatusController = new GetJobStatusController(new MockGetJobStatusUseCase());
+
+        // Spy on console.error to suppress errors during test execution
+        consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        jest.clearAllMocks();  // Clear previous mocks before each test
 
         // Register the controller's route handler
         //@ts-ignore
         app.get('/job/:id', (req, res) => getJobStatusController.onGetJobStatus(req, res));
+    });
+
+    // Restore original console.error after each test
+    afterEach(() => {
+        consoleErrorSpy.mockRestore();
     });
 
     it('should return job status data when job exists', async () => {
@@ -57,5 +68,4 @@ describe('GetJobStatusController', () => {
         expect(response.status).toBe(400);
         expect(response.body).toEqual({ message: "Invalid pagination parameters" });
     });
-
 });

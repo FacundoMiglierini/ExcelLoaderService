@@ -1,5 +1,8 @@
 import XLSX from 'xlsx';
 
+// This function reads an Excel file from the given file path and converts it to a JSON array of rows.
+// It uses the `xlsx` library to parse the Excel file and extract the data from the first sheet.
+// The data is returned as an array of rows, where each row is an array of cell values.
 export const readExcel = (filePath: string): any[] => {
 
     const workbook = XLSX.readFile(filePath);

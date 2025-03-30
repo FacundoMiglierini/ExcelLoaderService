@@ -12,6 +12,7 @@ import { Model } from "mongoose";
 import { IProcessFileUseCase } from "../interfaces/IProcessFileUseCase";
 
 
+// Use Case responsible for handling the logic to process a file.
 @injectable()
 export class ProcessFileUseCase implements IProcessFileUseCase {
 
@@ -29,6 +30,7 @@ export class ProcessFileUseCase implements IProcessFileUseCase {
         this.customModelRepository = customModelRepository
     }
 
+    // Entry point for broker Consumer
     async processFile(data: { jobId: string, filename: string, schema: any}) {
 
         const { jobId, filename, schema } = data;
@@ -46,6 +48,7 @@ export class ProcessFileUseCase implements IProcessFileUseCase {
         }
     }
 
+    // Processes a single row of data and validates each cell based on the schema
     private processRow(jobId: string, row: any, rowIndex: number, schema: any[]) {
 
         const newRow: any = { row: rowIndex };
@@ -81,7 +84,8 @@ export class ProcessFileUseCase implements IProcessFileUseCase {
         return { newRow, rowErrors };
     }
 
-    private async processFileBatches (jobId: string, filename: string, model: Model<any>, schema: { [key: string] : { type: string, required: boolean } }) {
+    // Processes the file in batches of rows
+    private async processFileBatches(jobId: string, filename: string, model: Model<any>, schema: { [key: string] : { type: string, required: boolean } }) {
 
         const parsedSchema = schemaAsList(schema);
         const data = readExcel(`${UPLOAD_DIR}/${filename}`);

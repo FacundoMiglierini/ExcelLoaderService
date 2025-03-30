@@ -11,20 +11,25 @@ import { startChannel } from '../utils/rabbitUtils';
 import { IProcessFileUseCase } from '../interfaces/IProcessFileUseCase';
 import { ProcessFileUseCase } from '../usecases/processFileUseCase';
 
-
+// Create and configure the Inversify container to manage dependencies.
 const container = new Container();
 
+// Bind interfaces to their corresponding implementations
 container.bind<IJobRepository>(INTERFACE_TYPE.JobRepository).to(JobRepository);
 container.bind<IJobErrorRepository>(INTERFACE_TYPE.JobErrorRepository).to(JobErrorRepository);
 container.bind<ICustomModelRepository>(INTERFACE_TYPE.CustomModelRepository).to(CustomModelRepository);
 container.bind<IProcessFileUseCase>(INTERFACE_TYPE.ProcessFileUseCase).to(ProcessFileUseCase);
 
+// Retrieve the ProcessFileUseCase from the container for later use
 const useCase = container.get<ProcessFileUseCase>(INTERFACE_TYPE.ProcessFileUseCase);
 
+/**
+ * Connects to RabbitMQ broker and consumes messages from the queue.
+ * This function listens for incoming messages, processes them using the ProcessFileUseCase,
+ * and acknowledges the message once processing is complete.
+ */
 export default async function brokerConsumerConnection() {
-
     try {
-
         const channel = await startChannel();
         const queue = await channel.assertQueue('', {
           exclusive: true
@@ -41,5 +46,4 @@ export default async function brokerConsumerConnection() {
     } catch (error) {
         console.error("Error in RabbitMQ consumer connection: ", error)
     }
-
 }

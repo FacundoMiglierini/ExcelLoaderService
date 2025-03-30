@@ -6,6 +6,7 @@ import { publish } from "../services/Publisher";
 import { schemaAsDict } from "../utils/fileProcessingUtils";
 import { INTERFACE_TYPE } from "../config/config";
 
+// This class handles the use case for uploading a file and publishing it for processing.
 @injectable()
 export class UploadFileUseCase implements IUploadFileUseCase {
 
@@ -17,6 +18,7 @@ export class UploadFileUseCase implements IUploadFileUseCase {
         this.jobRepository = jobRepository
     }
 
+    // Main method to handle the file upload, validate the schema, create a new job with process status, and publish the file to the broker.
     async uploadFile(filename: string, schema: string) {
 
         const validatedSchema = schemaAsDict(JSON.parse(schema));

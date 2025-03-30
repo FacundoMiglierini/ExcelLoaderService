@@ -4,15 +4,17 @@ import path from 'path';
 import { UPLOAD_DIR } from '../config/config';
 import { Request, Response, NextFunction } from 'express';
 
+// Configure storage for uploaded files using Multer
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, UPLOAD_DIR); // Directory to store uploaded files
     },
     filename: (req, file, cb) => {
-        cb(null, new Date().toISOString() + '_' + file.originalname) // Use original filename as identifier
+        cb(null, new Date().toISOString() + '_' + file.originalname) // Use current time + original filename as identifier
     },
 });
 
+// Multer configuration for file upload
 export const upload = multer({
     storage: storage,
     fileFilter: (req, file, cb) => {
@@ -26,6 +28,7 @@ export const upload = multer({
     },
 });
 
+// Custom error handler for Multer-related errors
 export const multerErrorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
     if (err instanceof multer.MulterError) {
         // Handle Multer-specific errors

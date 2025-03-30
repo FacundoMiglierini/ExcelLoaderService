@@ -3,6 +3,7 @@ import express from 'express';
 import { Authenticate } from '../middleware/auth';
 import { ValidateSignature } from '../utils/authUtils';
 
+// Mocking the ValidateSignature function from the authUtils module
 jest.mock('../utils/authUtils', () => ({
     ValidateSignature: jest.fn(),
 }));
@@ -12,11 +13,13 @@ describe('Authenticate Middleware', () => {
 
     let consoleErrorSpy: jest.SpyInstance<void>;
 
+    // Setup before each test
     beforeEach(() => {
         consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
         jest.clearAllMocks();
     });
 
+    // Restore original console.error after each test
     afterEach(() => {
         consoleErrorSpy.mockRestore();
     });

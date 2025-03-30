@@ -4,6 +4,7 @@ import { inject, injectable } from "inversify";
 import { IGetJobStatusUseCase } from "../interfaces/IGetJobStatusUseCase";
 import { INTERFACE_TYPE } from "../config/config";
 
+// Controller that handles job status requests.
 @injectable()
 export class GetJobStatusController {
 
@@ -15,6 +16,8 @@ export class GetJobStatusController {
         this.useCase = useCase;
     }
 
+    // Handles GET requests for fetching job status with pagination. 
+    // Default pagination values: page = 1, limit = 10.
     async onGetJobStatus(req: Request, res: Response) {
         try {
             const jobId = req.params.id

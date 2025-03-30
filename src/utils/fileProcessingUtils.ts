@@ -1,6 +1,9 @@
 import { SchemaTypes } from "mongoose";
 import { DataTypes, SchemaDataTypes } from "../enums/DataTypes";
 
+// Maps a given schema definition to a Mongoose schema format.
+// It takes a definition object with the field names and their respective types,
+// and returns a schema object compatible with Mongoose.
 export function mapToMongooseSchema(definition: { [key: string]: { type: SchemaDataTypes; required?: boolean } }) {
 
     const typeMap: { [key in SchemaDataTypes]: any } = {
@@ -21,15 +24,21 @@ export function mapToMongooseSchema(definition: { [key: string]: { type: SchemaD
     return schemaDefinition;
 }
 
+// Checks if a given value is a list of numbers separated by commas.
+// It returns true if all elements in the list can be parsed as numbers.
 export function isNumberList(value: string): boolean {
     const parts = value.split(",");
     return parts.every(part => !isNaN(Number(part.trim())));
 }
 
+// Checks if a given value is a valid number.
+// It returns true if the value can be parsed as a number.
 export function isNumber(value: string): boolean {
     return !isNaN(Number(value));
 }
 
+// Converts a schema definition (in object format) to an array of columns
+// where each column is an object containing the column name, type, and required flag.
 export function schemaAsList(schema: { [key: string] : { type: string, required: boolean } }) {
     return Object.keys(schema).map(key => {
         const type = schema[key].type; 
@@ -43,6 +52,8 @@ export function schemaAsList(schema: { [key: string] : { type: string, required:
     });
 }
 
+// Converts a given schema format (in a dictionary) into a processed schema
+// that assigns types and required flags to each column, while handling error cases for incompatible data types.
 export function schemaAsDict(format: { [key: string]: string }) {
 
     try {
@@ -86,12 +97,14 @@ export function schemaAsDict(format: { [key: string]: string }) {
     }
 }
 
-// Helper function to check if the cell is invalid based on required flag
+// Checks if a given cell is invalid based on whether it's required and empty.
+// It returns true if the cell is either null, empty, or undefined and is required.
 export function isCellInvalid(cell: any, required: boolean): boolean {
     return (cell === null || cell === '' || cell === 'undefined') && required;
 }
 
-// Helper function to format the cell based on its type
+// Formats a cell based on its expected type (string, number, or array).
+// It throws an error if the cell value doesn't match the expected type.
 export function formatCell(cell: any, type: string): any {
     if (cell === null) return null;
 
@@ -107,7 +120,8 @@ export function formatCell(cell: any, type: string): any {
     }
 }
 
-// Helper function to format a string cell
+// Helper function to format a cell as a string
+// If the cell value is a number or an array of numbers, it throws an error.
 export function formatString(cell: any): string {
     if (isNumber(cell) || isNumberList(cell)) {
         throw new Error(`Cannot convert '${cell}' to a String: it is a Number or Array<Number>.`);
@@ -115,7 +129,8 @@ export function formatString(cell: any): string {
     return cell.toString();
 }
 
-// Helper function to format a number cell
+// Helper function to format a cell as a number.
+// If the cell value cannot be converted to a number, it throws an error.
 export function formatNumber(cell: any): number {
     if (!isNumber(cell)) {
         throw new Error(`Cannot convert '${cell}' to a Number.`);
@@ -123,7 +138,8 @@ export function formatNumber(cell: any): number {
     return Number(cell);
 }
 
-// Helper function to format an array cell
+// Helper function to format a cell as an array of numbers.
+// If the cell value cannot be converted to an array of numbers, it throws an error.
 export function formatArray(cell: any): number[] {
     if (!isNumberList(cell.toString())) {
         throw new Error(`Cannot convert '${cell}' to an Array<Number>.`);

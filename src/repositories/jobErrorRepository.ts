@@ -1,13 +1,15 @@
 import { injectable } from "inversify";
+
 import { BATCH_SIZE } from "../config/config";
 import { JobErrorModel } from "../entities/JobError";
 import { JobError } from "../interfaces/IJobError";
 import { IJobErrorRepository } from "../interfaces/IJobErrorRepository";
 
+// Repository for interacting with JobError data in MongoDB.
 @injectable()
 export class JobErrorRepository implements IJobErrorRepository {
 
-
+    // Finds JobError records by job_id, with pagination support (page and limit).
     async find(id: string, page: number, limit: number) {
 
         // Calculate skip value based on page and limit
@@ -24,6 +26,7 @@ export class JobErrorRepository implements IJobErrorRepository {
         return results;
     }
 
+    // Saves multiple JobError records in batches to MongoDB.
     async saveMany(errors: JobError[], force: boolean | undefined = false): Promise<void> {
 
         if (errors.length === 0) {

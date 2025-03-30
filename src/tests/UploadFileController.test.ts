@@ -15,18 +15,28 @@ class MockUploadFileUseCase implements IUploadFileUseCase {
 }
 
 describe('UploadFileController', () => {
-    let app: express.Express;
+    const app = express();
     let uploadFileController: UploadFileController;
     let mockUseCase: MockUploadFileUseCase;
+    let consoleErrorSpy: jest.SpyInstance<void>;
 
+    // Setup before each test
     beforeEach(() => {
-        app = express();
         mockUseCase = new MockUploadFileUseCase();
         uploadFileController = new UploadFileController(mockUseCase);
 
+        // Spy on console.error to suppress errors during test execution
+        consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        jest.clearAllMocks();  // Clear previous mocks before each test
+
         // Register the controller's route handler
         //@ts-ignore
-        app.post('/files', upload.single('file_content'), (req, res) => uploadFileController.onCreateJob(req, res));
+        app.post('/files', upload.single('file_content'), (req, res) => uploadFileController.onUploadFile(req, res));
+    });
+
+    // Restore original console.error after each test
+    afterEach(() => {
+        consoleErrorSpy.mockRestore();
     });
 
     it('should return 202 for successful file upload with valid schema', async () => {
@@ -74,7 +84,7 @@ describe('UploadFileController', () => {
 
         const appWithErrorController = express();
         //@ts-ignore
-        appWithErrorController.post('/files', upload.single('file_content'), (req, res) => errorController.onCreateJob(req, res));
+        appWithErrorController.post('/files', upload.single('file_content'), (req, res) => errorController.onUploadFile(req, res));
 
         const fileContent = Buffer.from('mock excel content'); // Mock file content
         const schema = JSON.stringify({ column1: 'string' });
@@ -87,5 +97,4 @@ describe('UploadFileController', () => {
         expect(errorResponse.status).toBe(500);
         expect(errorResponse.body).toEqual({ message: "Internal Server Error" });
     });
-
 });

@@ -4,6 +4,7 @@ import { inject, injectable } from "inversify";
 import { IUploadFileUseCase } from "../interfaces/IUploadFileUseCase";
 import { INTERFACE_TYPE } from "../config/config";
 
+// Controller responsible for handling file upload requests.
 @injectable()
 export class UploadFileController {
 
@@ -15,7 +16,8 @@ export class UploadFileController {
         this.useCase = useCase;
     }
 
-    async onCreateJob(req: Request, res: Response) {
+    // Handles file upload and job creation. Responds with job ID upon success.
+    async onUploadFile(req: Request, res: Response) {
         try {
             if (!req.file) {
                 const error: any = new Error("Please upload an Excel file");
