@@ -12,7 +12,7 @@ export class CustomModelRepository implements ICustomModelRepository{
     async create(collection_name: string, schema: any): Promise<Model<any>> {
 
         const mongooseSchema = mapToMongooseSchema({ row: { type: SchemaDataTypes.NUMBER, unique: true }, ...schema});
-        const schemaObject = new Schema(mongooseSchema);
+        const schemaObject = new Schema(mongooseSchema, { collection: collection_name });
 
         return mongoose.model(collection_name, schemaObject);
     }
