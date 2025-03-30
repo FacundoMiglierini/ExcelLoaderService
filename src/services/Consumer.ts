@@ -1,12 +1,13 @@
 import { Container } from 'inversify';
+
 import { broker, INTERFACE_TYPE } from '../config/config';
 import { JobRepository } from '../repositories/jobRepository';
 import { UploadFileUseCase } from '../usecases/uploadFileUseCase';
-import { CustomSchemaRepository } from '../repositories/customSchemaRepository';
+import { CustomModelRepository } from '../repositories/customModelRepository';
 import { JobErrorRepository } from '../repositories/jobErrorRepository';
 import { IJobRepository } from '../interfaces/IJobRepository';
 import { IJobErrorRepository } from '../interfaces/IJobErrorRepository';
-import { ICustomSchemaRepository } from '../interfaces/ICustomSchemaRepository';
+import { ICustomModelRepository } from '../interfaces/ICustomModelRepository';
 import { IUploadFileUseCase } from '../interfaces/IUploadFileUseCase';
 import { startChannel } from '../utils/rabbitUtils';
 
@@ -15,7 +16,7 @@ const container = new Container();
 
 container.bind<IJobRepository>(INTERFACE_TYPE.JobRepository).to(JobRepository);
 container.bind<IJobErrorRepository>(INTERFACE_TYPE.JobErrorRepository).to(JobErrorRepository);
-container.bind<ICustomSchemaRepository>(INTERFACE_TYPE.CustomSchemaRepository).to(CustomSchemaRepository);
+container.bind<ICustomModelRepository>(INTERFACE_TYPE.CustomModelRepository).to(CustomModelRepository);
 container.bind<IUploadFileUseCase>(INTERFACE_TYPE.UploadFileUseCase).to(UploadFileUseCase);
 
 const useCase = container.get<UploadFileUseCase>(INTERFACE_TYPE.UploadFileUseCase);
@@ -32,7 +33,7 @@ export default async function brokerConsumerConnection() {
         await channel.bindQueue(queue.queue, broker.BROKER_EXCHANGE, '');
         channel.consume(queue.queue, async (msg: any) => {
             if (msg.content)
-                await useCase.createFile(JSON.parse(msg.content.toString()))
+                await useCase.saveFile(JSON.parse(msg.content.toString()))
             channel.ack(msg);
         }, {
             noAck: false
