@@ -197,8 +197,8 @@ Requiere un token de autenticación en la cabecera de la solicitud.
       ```json
       {
         "id": "12345",
-        "status": "processing",
-        "file_id": "6789",
+        "status": "done",
+        "collection_name": "file.xlsx",
         "errors": []
       }
       ```
