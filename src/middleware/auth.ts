@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { ValidateSignature } from "../utils/authUtils";
 
-
+// Middleware to authenticate requests by validating the signature.
 export const Authenticate = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const isValid = await ValidateSignature(req);
@@ -11,6 +11,7 @@ export const Authenticate = async (req: Request, res: Response, next: NextFuncti
             return res.status(401).send({ message: 'Not authorized' });
         }
     } catch (err) {
+        console.error(err);
         if (err instanceof Error) {
             return res.status(401).send({ message: err.message });
         } else {

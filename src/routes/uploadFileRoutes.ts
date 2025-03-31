@@ -1,30 +1,42 @@
-import express from 'express';
-import multer from 'multer';
+import express, { Request, Response } from 'express';
+import { Container } from 'inversify';
 
-import { JobRepository } from '../repositories/jobRepository';
 import { Authenticate } from '../middleware/auth';
-import { FileRepository } from '../repositories/fileRepository';
-import { UploadFileController } from '../controllers/UploadFileController';
+import { multerErrorHandler , upload } from '../middleware/multer';
+import { IJobRepository } from '../interfaces/IJobRepository';
+import { INTERFACE_TYPE } from '../config/config';
+import { JobRepository } from '../repositories/jobRepository';
+import { IJobErrorRepository } from '../interfaces/IJobErrorRepository';
+import { JobErrorRepository } from '../repositories/jobErrorRepository';
+import { ICustomModelRepository } from '../interfaces/ICustomModelRepository';
+import { CustomModelRepository } from '../repositories/customModelRepository';
+import { IUploadFileUseCase } from '../interfaces/IUploadFileUseCase';
 import { UploadFileUseCase } from '../usecases/uploadFileUseCase';
+import { UploadFileController } from '../controllers/UploadFileController';
 
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 100 * 1024 * 1024 } // 100MB limit
-});
+// Create and configure the Inversify container to manage dependencies.
+const container = new Container();
 
-const jobRepository = new JobRepository();
-const fileRepository = new FileRepository();
-const useCase = new UploadFileUseCase(jobRepository, fileRepository);
-const controller = new UploadFileController(useCase);
+// Bind interfaces to their corresponding implementations
+container.bind<IJobRepository>(INTERFACE_TYPE.JobRepository).to(JobRepository);
+container.bind<IJobErrorRepository>(INTERFACE_TYPE.JobErrorRepository).to(JobErrorRepository);
+container.bind<ICustomModelRepository>(INTERFACE_TYPE.CustomModelRepository).to(CustomModelRepository);
+container.bind<IUploadFileUseCase>(INTERFACE_TYPE.UploadFileUseCase).to(UploadFileUseCase);
+container.bind(INTERFACE_TYPE.UploadFileController).to(UploadFileController);
 
+// Create an Express router for handling the file upload route.
 const uploadFileRouter = express.Router();
-//@ts-ignore
-uploadFileRouter.use(Authenticate)
 
-uploadFileRouter.post("/files", upload.fields([
-  { name: 'file_content', maxCount: 1 },
-]), async (req, res) => {
-    await controller.onCreateJob(req, res);
+// Apply authentication middleware to all routes in this router
+//@ts-ignore
+uploadFileRouter.use(Authenticate);
+
+// Get the UploadFileController from the container
+const controller = container.get<UploadFileController>(INTERFACE_TYPE.UploadFileController);
+
+// Define the route for uploading files
+uploadFileRouter.post("/files", upload.single('file_content'), multerErrorHandler, async (req: Request, res: Response) => {
+    await controller.onUploadFile(req, res);
 });
 
 export default uploadFileRouter;

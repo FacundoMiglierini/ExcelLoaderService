@@ -5,38 +5,27 @@ import { Job } from "../interfaces/IJob";
 import JobStatus from "../enums/Job";
 
 
-const jobErrorSchema = new mongoose.Schema({
-  row: Number,
-  col: Number
-}, { _id: false }); 
-
 export const jobSchema = new Schema<Job>({
         id: {
             type: String,
             default: uuidv4,
             unique: true,
-            required: true,
+            required: [true, 'ID is required'],
         },
         status: {
             type: String,
             enum: Object.values(JobStatus),
             default: JobStatus.PENDING,
-            required: true,
+            required: [true, 'Status is required'],
         },
-        schema: { type: Object },
-        raw_data_length: {
-            type: Number, 
-            default: 0
-        },
-        raw_data: { type: Object },
-        job_errors: {
-            type: [jobErrorSchema], 
-            default: [],
-        },
-        file_id: { 
+        filename: { 
             type: String,
-            ref: 'File', 
+            required: [true, 'Filename is required'],
         },
+        schema: {
+            type: String,
+            required: [true, 'Schema is required'],
+        }
     },{
         timestamps: true 
     }

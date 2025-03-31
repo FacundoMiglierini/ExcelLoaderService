@@ -1,6 +1,11 @@
 import mongoose from "mongoose";
 import { database } from "../config/config";
 
+/**
+ * Establishes a connection to the MongoDB database using Mongoose.
+ * If the connection is successful, it logs the MongoDB version.
+ * If there is an error, it logs the error message.
+ */
 export default async function dbConnection() {
 
     try {

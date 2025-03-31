@@ -18,7 +18,6 @@ services:
       - ${DATABASE_PORT}:${DATABASE_PORT}
     volumes:
       - ./database-v:/data/db
-      - ./database/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
     env_file: .env
 
   rabbitmq:

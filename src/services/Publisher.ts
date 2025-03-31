@@ -1,18 +1,21 @@
-import { Amqp } from 'typescript-amqp';
 import { broker } from '../config/config';
+import { startChannel } from '../utils/rabbitUtils';
 
+/**
+ * Publishes a message to the RabbitMQ broker.
+ * 
+ * This function creates a channel, formats a message containing job information, 
+ * and publishes it to the broker's exchange.
+ * 
+ * @param id - The job identifier
+ * @param filename - The filename associated with the job
+ * @param schema - The schema associated with the job
+ */
+async function publish(id: string, filename: string, schema: any) {
 
-async function publish(id: string) {
-
-    const amqp = new Amqp();
-    const connection = await amqp.connect(broker.URI); 
-    const channel = await connection.createChannel()
-    await channel.assertExchange(broker.BROKER_EXCHANGE, 'fanout', {
-      durable: false
-    });
-
+    const channel = await startChannel();
+    channel.publish(broker.BROKER_EXCHANGE, '', Buffer.from(JSON.stringify({ jobId: id, filename: filename, schema: schema })));
     console.debug(`Msg published.`)
-    await channel.publish(broker.BROKER_EXCHANGE, '', Buffer.from(id));
 }
 
 export { publish };
