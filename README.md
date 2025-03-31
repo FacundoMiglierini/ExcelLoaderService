@@ -7,7 +7,7 @@ Servicio de carga de planillas de cálculo Excel con validación de formato y no
 Este proyecto está desarrollado utilizando **Node.js**, **Express**, **TypeScript**, **RabbitMQ** y **MongoDB**. Proporciona un servicio que permite la carga y procesamiento de archivos Excel 
 mediante solicitudes HTTP, siguiendo la arquitectura **RESTful API**. 
 
-El proceso comienza cuando el usuario envía una planilla Excel junto con un esquema que define el formato de los datos a procesar. Para evitar la sobrecarga y el bloqueo de la interfaz HTTP durante el procesamiento de archivos, que varía en tiempo según su tamaño, se implementa **RabbitMQ** como un message broker. Esto permite gestionar las peticiones de manera asincrónica, utilizando colas para procesar los archivos sin afectar la experiencia del usuario.
+El proceso comienza cuando el usuario envía una planilla Excel junto con un esquema que define el formato de los datos a procesar a través de un endpoint HTTP. Para evitar la sobrecarga y el bloqueo de la interfaz HTTP durante el procesamiento de archivos, lo cual varía en tiempo según su tamaño, se recurre a **RabbitMQ** como gestor de mensajes. Esto permite gestionar las peticiones de manera asincrónica, utilizando colas para procesar los archivos sin afectar la experiencia del usuario.
 
 Una vez que las peticiones son encoladas, son procesadas en lotes. El resultado del procesamiento se guarda de forma incremental en **MongoDB**, asegurando que los datos sean persistidos correctamente a medida que se completan los lotes.
 
@@ -37,13 +37,13 @@ Los Controllers son responsables de recibir las solicitudes de los clientes y de
 
 Los Use Cases representan las operaciones de negocio de la aplicación y contienen la lógica de procesamiento principal. Cada Use Case es independiente y desacoplado gracias a las interfaces que definen su comportamiento. Esto permite que los casos de uso sean fácilmente intercambiables o probados sin necesidad de depender de implementaciones específicas.
 
-Uno de los casos de uso importantes es el de Carga y procesamiento de Archivos. Este proceso sigue estos pasos:
+Uno de los casos de uso importantes es el de Carga de Archivos. Su procedimiento comprende los siguientes pasos:
 
   - El usuario envía una solicitud para cargar un archivo.
   - El Controller recibe la solicitud y delega la operación al Use Case correspondiente.
   - El Use Case de carga genera un identificador único para el proceso de carga y retorna inmediatamente este ID al cliente.
   - Posteriormente, el Use Case envía un mensaje a RabbitMQ (como Message Broker) para encolar el nuevo proceso de carga.
-  - Cuando llega su turno, RabbitMQ invoca nuevamente una función del Use Case para continuar con el procesamiento del archivo. De esta manera se evita el bloqueo de la interfaz HTTP y se gestiona el procesamiento de manera asincrónica.
+  - Cuando llega su turno, RabbitMQ invoca el Use Case de procesamiento de archivos para continuar con dicha tarea. De esta manera se evita el bloqueo de la interfaz HTTP y se gestiona el procesamiento de manera asincrónica.
 
 ### 4. Message Broker (RabbitMQ)
 
@@ -51,7 +51,7 @@ RabbitMQ actúa como un Message Broker en el sistema. La comunicación asincrón
 
 ### 5. Repositories
 
-El acceso a la base de datos y el almacenamiento de las entidades se realiza a través de repositorios. Los repositorios son responsables de manejar la persistencia de las entidades en las diferentes bases de datos, en este caso, MongoDB. Este patrón asegura que la lógica de negocio y el acceso a servicios externos estén desacoplados.
+El acceso a la base de datos y el almacenamiento de las entidades se realiza a través de repositorios. Los repositorios son responsables de manejar la persistencia de las entidades en las diferentes bases de datos, en este caso, MongoDB. Este patrón asegura que la lógica de negocio y el acceso a servicios externos estén desacoplados. Cabe destacar que los repositorios implementados utilizan el ORM Mongoose para un manejo simplificado de las collecciones y schemas en MongoDB.
 
 #### MongoDB
 
@@ -132,6 +132,7 @@ Requiere un token de autenticación en la cabecera de la solicitud.
     - Cuerpo de la respuesta:
       ```json
       {
+        "message": "File uploaded successfully",
         "job_id": "12345"
       }
       ```
@@ -141,7 +142,7 @@ Requiere un token de autenticación en la cabecera de la solicitud.
     - Cuerpo de la respuesta:
       ```json
       {
-        "message": "Missing required fields: file_content and/or file_schema"
+        "message": "Please upload an Excel file/Please upload a file schema"
       }
       ```
 - **Código 500: Error Interno del Servidor**
@@ -228,80 +229,7 @@ Requiere un token de autenticación en la cabecera de la solicitud.
         "message": "Internal Server Error"
       }
       ```
-  
-### GET ```/files/:id```
-
-#### Descripción 
-
-Este endpoint se utiliza para obtener un archivo específico identificado por su ```fileId```, con soporte para paginación de su contenido procesado. 
-Requiere un token de autenticación en la cabecera de la solicitud.
-
-#### Parámetros
-
-##### Parámetros en la URL
-
-- **id** (Path Parameter):
-
-  - Tipo: ```String```
-  - Descripción: El fileId del trabajo que se desea consultar. Este parámetro es obligatorio y debe estar presente en la URL de la solicitud.
-  - Ejemplo: ```/files/6789```
-
-##### Parámetros en la consulta (query parameters)
-
-- **page**:
-
-  - Tipo: ```Number``` (opcional)
-  - Descripción: El número de página de los resultados que se desea obtener. Si no se proporciona, el valor predeterminado será 1.
-  - Valor predeterminado: 1
-  - Ejemplo: ```?page=2```
-
-- **limit**:
-
-  - Tipo: ```Number``` (opcional)
-  - Descripción: El número de resultados por página. Si no se proporciona, el valor predeterminado será 10.
-  - Valor predeterminado: 10
-  - Ejemplo: ```?limit=20```
-
-##### Response 
-
-- **Código 200: Éxito**
-
-    - Descripción: Si la solicitud es procesada correctamente, se devolverán los detalles del archivo con los datos paginados en formato JSON.
-    - Cuerpo de la respuesta:
-      ```json
-      {
-        "id": "6789",
-        "job_id": "12345",
-        "content": [ {} ]
-      }
-      ```
-- **Código 400: Parámetros de paginación inválidos**
-
-    - Descripción: Si los parámetros ```page``` o ```limit``` son inválidos (no son números, son menores que 1, etc.), se devolverá un error con el mensaje correspondiente.
-    - Cuerpo de la respuesta:
-      ```json
-      {
-        "message": "Invalid pagination parameters"
-      }
-      ```
-- **Código 404: No encontrado**
-
-    - Descripción: Si no se encuentra el archivo correspondiente al ```fileId```, se devolverá un error con el mensaje correspondiente.
-    - Cuerpo de la respuesta:
-      ```json
-      {
-        "message": "File not found"
-      }
-      ```
-- **Código 500: Error Interno del Servidor**
-
-    - Descripción: Si ocurre un error inesperado en el servidor, se devolverá un mensaje genérico de error interno.
-    - Cuerpo de la respuesta:
-      ```json
-      {
-        "message": "Internal Server Error"
-      }
-      ```
+      
 ### Unit testing
 
 Es posible ejecutar los tests de unidad ubicados en ```src/tests/``` mediante el siguiente comando:
