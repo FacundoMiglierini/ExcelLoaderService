@@ -1,154 +1,154 @@
 # ExcelLoaderService
 
-Servicio de carga de planillas de cálculo Excel con validación de formato y notificación de procesamiento.
+**English** · [Español](README.es.md)
 
-## Descripción
+Excel spreadsheet upload service with format validation and processing status tracking.
 
-Este proyecto está desarrollado utilizando **Node.js**, **Express**, **TypeScript**, **RabbitMQ** y **MongoDB**. Proporciona un servicio que permite la carga y procesamiento de archivos Excel 
-mediante solicitudes HTTP, siguiendo la arquitectura **RESTful API**. 
+## Overview
 
-El proceso comienza cuando el usuario envía una planilla Excel junto con un esquema que define el formato de los datos a procesar a través de un endpoint HTTP. Para evitar la sobrecarga y el bloqueo de la interfaz HTTP durante el procesamiento de archivos, lo cual varía en tiempo según su tamaño, se recurre a **RabbitMQ** como gestor de mensajes. Esto permite gestionar las peticiones de manera asincrónica, utilizando colas para procesar los archivos sin afectar la experiencia del usuario.
+This project is built with **Node.js**, **Express**, **TypeScript**, **RabbitMQ** and **MongoDB**. It exposes a **RESTful API** for uploading and processing Excel files over HTTP.
 
-Una vez que las peticiones son encoladas, son procesadas en lotes. El resultado del procesamiento se guarda de forma incremental en **MongoDB**, asegurando que los datos sean persistidos correctamente a medida que se completan los lotes.
+The flow starts when the user sends an Excel spreadsheet to an HTTP endpoint, together with a schema that defines the format of the data to process. Processing time grows with file size, so to avoid overloading or blocking the HTTP interface, requests are handed off to **RabbitMQ** as a message broker. Requests are handled asynchronously through queues, so files are processed without affecting the user experience.
 
-## Tecnologías Utilizadas
+Once queued, requests are processed in batches. Results are saved incrementally to **MongoDB**, so data is persisted as each batch completes.
 
-- **Node.js**: Entorno de ejecución para JavaScript en el servidor.
-- **Express**: Framework web minimalista para Node.js.
-- **TypeScript**: Superset de JavaScript que agrega tipado estático.
-- **MongoDB**: Base de datos NoSQL para almacenar datos.
-- **RabbitMQ**: Sistema de mensajería para comunicación asincrónica.
+## Tech stack
 
-## Arquitectura
+- **Node.js**: server-side JavaScript runtime.
+- **Express**: minimalist web framework for Node.js.
+- **TypeScript**: JavaScript superset with static typing.
+- **MongoDB**: NoSQL database for storing data.
+- **RabbitMQ**: message broker for asynchronous communication.
 
-![Arquitectura del servicio, siguiendo las reglas de Clean Architecture](/docs/architecture.png)
+## Architecture
 
-Este sistema está construido utilizando Node.js con Express y TypeScript. La arquitectura sigue el patrón de Clean Architecture, que promueve un código modular, desacoplado y fácil de mantener. A continuación, se describe cómo se estructura el sistema y cómo interactúan sus componentes principales.
+![Service architecture, following Clean Architecture rules](/docs/architecture.png)
 
-### 1. API REST
+The system is built with Node.js, Express and TypeScript and follows Clean Architecture, which promotes modular, decoupled and maintainable code. The main components and how they interact are described below.
 
-El sistema proporciona una API REST que actúa como punto de entrada para interactuar con los diferentes servicios y funcionalidades del sistema. Esta API está construida sobre Express, y cada ruta de la API está gestionada por un Controller.
+### 1. REST API
+
+The REST API is the entry point to the system's services and features. It is built on Express, and each route is handled by a Controller.
 
 ### 2. Controllers
 
-Los Controllers son responsables de recibir las solicitudes de los clientes y delegar la lógica de negocio a los Use Cases. Cada controlador está asociado a una ruta de la API y maneja la validación y el formato de los datos de entrada y salida. Los controladores se comunican con los Use Cases a través de interfaces, lo que permite un desacoplamiento entre la lógica de presentación y la lógica de negocio.
+Controllers receive client requests and delegate business logic to Use Cases. Each controller is bound to an API route and handles validation and formatting of input and output data. Controllers talk to Use Cases through interfaces, which decouples presentation logic from business logic.
 
 ### 3. Use Cases
 
-Los Use Cases representan las operaciones de negocio de la aplicación y contienen la lógica de procesamiento principal. Cada Use Case es independiente y desacoplado gracias a las interfaces que definen su comportamiento. Esto permite que los casos de uso sean fácilmente intercambiables o probados sin necesidad de depender de implementaciones específicas.
+Use Cases represent the application's business operations and hold the core processing logic. Each Use Case is independent and decoupled through the interfaces that define its behavior, so use cases can be swapped or tested without depending on specific implementations.
 
-Uno de los casos de uso importantes es el de Carga de Archivos. Su procedimiento comprende los siguientes pasos:
+One of the key use cases is File Upload. It works as follows:
 
-  - El usuario envía una solicitud para cargar un archivo.
-  - El Controller recibe la solicitud y delega la operación al Use Case correspondiente.
-  - El Use Case de carga genera un identificador único para el proceso de carga y retorna inmediatamente este ID al cliente.
-  - Posteriormente, el Use Case envía un mensaje a RabbitMQ (como Message Broker) para encolar el nuevo proceso de carga.
-  - Cuando llega su turno, RabbitMQ invoca el Use Case de procesamiento de archivos para continuar con dicha tarea. De esta manera se evita el bloqueo de la interfaz HTTP y se gestiona el procesamiento de manera asincrónica.
+  - The user sends a request to upload a file.
+  - The Controller receives the request and delegates it to the corresponding Use Case.
+  - The upload Use Case generates a unique ID for the upload job and returns it to the client immediately.
+  - The Use Case then publishes a message to RabbitMQ (the message broker) to enqueue the new upload job.
+  - When its turn comes, RabbitMQ triggers the file-processing Use Case to carry on with the job. This keeps the HTTP interface unblocked and processing asynchronous.
 
-### 4. Message Broker (RabbitMQ)
+### 4. Message broker (RabbitMQ)
 
-RabbitMQ actúa como un Message Broker en el sistema. La comunicación asincrónica a través de RabbitMQ permite una arquitectura más escalable y flexible.
+RabbitMQ acts as the system's message broker. Asynchronous communication through RabbitMQ makes the architecture more scalable and flexible.
 
 ### 5. Repositories
 
-El acceso a la base de datos y el almacenamiento de las entidades se realiza a través de repositorios. Los repositorios son responsables de manejar la persistencia de las entidades en las diferentes bases de datos, en este caso, MongoDB. Este patrón asegura que la lógica de negocio y el acceso a servicios externos estén desacoplados. Cabe destacar que los repositorios implementados utilizan el ORM Mongoose para un manejo simplificado de las collecciones y schemas en MongoDB.
+Database access and entity storage go through repositories, which handle persisting entities to the underlying databases — MongoDB in this case. This pattern keeps business logic decoupled from external services. The repositories use the Mongoose ODM to simplify working with MongoDB collections and schemas.
 
 #### MongoDB
 
-El sistema utiliza MongoDB para almacenar los procesos de carga de archivos y los archivos procesados. La implementación del repositorio que maneja MongoDB es independiente y puede ser fácilmente intercambiada por otro sistema de almacenamiento sin afectar la lógica de negocio.
+The system uses MongoDB to store upload jobs and processed files. The MongoDB repository implementation is self-contained and can be swapped for another storage system without affecting business logic.
 
-## Herramientas necesarias
-- **Yarn**: Versión 1.x.
-- **Docker Engine**: Versión 20.10.0 o superior.
+## Requirements
+- **Yarn**: version 1.x.
+- **Docker Engine**: version 20.10.0 or later.
 
-## Pasos de instalación
+## Installation
 
-### 1. Clonar el Repositorio
+### 1. Clone the repository
 
 ```bash
 git clone git@github.com:FacundoMiglierini/ExcelLoaderService.git
 
-# Entrar en el directorio del proyecto
+# Enter the project directory
 cd ExcelLoaderService
 ```
 
-### 2. Instalar las dependencias
+### 2. Install dependencies
 ```bash
 yarn install
 ```
 
-### 3. Iniciar los servicios
+### 3. Start the services
 
 ```bash
-# Asegurarse de tener iniciado el servicio de Docker (omitir si ya está iniciado)
+# Make sure the Docker service is running (skip if it already is)
 sudo systemctl start docker
 
-# Iniciar los servicios de la base de datos y el message broker usando Docker Compose
+# Start the database and the message broker with Docker Compose
 docker compose up
 ```
 
-### 4. Compilar y ejecutar el proyecto
+### 4. Build and run the project
 
 ```bash
 yarn start
 ```
 
-## Uso 
+## Usage
 
-**Aclaración**: dado que no se desarrolló un endpoint de login, en el archivo de entorno '.env' se encuentran definidos dos tokens: ```JWT_1``` y ```JWT_2```, generados a partir de la clave secreta ```APP_SECRET```
-declarada dentro del mismo archivo. Es posible utilizar los tokens para poner a prueba los endpoints permisionados, agregando uno de ellos al campo de cabecera ```Authorization```.
-Además, en la carpeta ```examples``` se encuentran ejemplos de archivos Excel para cargar.
+**Note**: since there is no login endpoint, the `.env` file defines two tokens, ```JWT_1``` and ```JWT_2```, generated from the ```APP_SECRET``` key declared in the same file. Use either token in the ```Authorization``` header to test the protected endpoints.
+The ```examples``` folder contains sample Excel files to upload.
 
-Una vez que el servidor está en ejecución, es posible interactuar con él mediante las siguientes rutas:
+Once the server is running, you can use the following routes:
 
-### POST ```/files``` 
+### POST ```/files```
 
-#### Descripción
+#### Description
 
-Este endpoint recibe un archivo Excel y un esquema en formato JSON para procesar la información contenida en el archivo Excel y crear un "job" de carga en el sistema. 
-Requiere un token de autenticación en la cabecera de la solicitud.
+Receives an Excel file and a JSON schema, and creates an upload job that processes the data in the file.
+Requires an authentication token in the request header.
 
-#### Parámetros 
+#### Parameters
 
-##### Request Body
+##### Request body
 
-- **file_content** (Archivo: ```multipart/form-data```):
+- **file_content** (File: ```multipart/form-data```):
 
-  - Tipo: ```File```
-  - Descripción: Es el archivo Excel que se va a procesar. Este archivo debe ser enviado como parte de una solicitud de formulario multipart. El archivo se espera en la clave ```file_content``` en el cuerpo de la solicitud.
-  - Formato: Excel (XLSX)
+  - Type: ```File```
+  - Description: the Excel file to process, sent as part of a multipart form request under the ```file_content``` key.
+  - Format: Excel (XLSX)
 
 - **file_schema** (String: ```application/json```):
-  
-  - Tipo: ```String```
-  - Descripción: Es un objeto JSON que contiene el esquema de los datos que se deben extraer del archivo Excel. El esquema define cómo deben ser interpretados y procesados los datos dentro del archivo Excel. Se espera en la clave ```file_schema``` en el cuerpo de la solicitud.
-  - Formato: JSON
- 
-##### Response 
 
-- **Código 202: Aceptado**
+  - Type: ```String```
+  - Description: a JSON object with the schema of the data to extract from the Excel file. It defines how the data in the file is interpreted and processed. Expected under the ```file_schema``` key.
+  - Format: JSON
 
-    - Descripción: Si la solicitud es válida y la creación del trabajo de carga es exitosa, el sistema devuelve el ID del trabajo creado.
-    - Cuerpo de la respuesta:
+##### Response
+
+- **202 Accepted**
+
+    - Description: if the request is valid and the upload job is created, the system returns the job ID.
+    - Response body:
       ```json
       {
         "message": "File uploaded successfully",
         "job_id": "12345"
       }
       ```
-- **Código 400: Solicitud incorrecta**
+- **400 Bad Request**
 
-    - Descripción: Si falta algún parámetro requerido (file_content o file_schema), se devolverá un error con el mensaje correspondiente.
-    - Cuerpo de la respuesta:
+    - Description: if a required parameter (file_content or file_schema) is missing, an error with the corresponding message is returned.
+    - Response body:
       ```json
       {
         "message": "Please upload an Excel file/Please upload a file schema"
       }
       ```
-- **Código 500: Error Interno del Servidor**
+- **500 Internal Server Error**
 
-    - Descripción: Si ocurre un error inesperado en el servidor, se devolverá un mensaje genérico de error interno.
-    - Cuerpo de la respuesta:
+    - Description: if an unexpected server error occurs, a generic internal error message is returned.
+    - Response body:
       ```json
       {
         "message": "Internal Server Error"
@@ -157,43 +157,43 @@ Requiere un token de autenticación en la cabecera de la solicitud.
 
 ### GET ```/jobs/:id```
 
-#### Descripción 
+#### Description
 
-Este endpoint se utiliza para obtener el estado de un trabajo de carga (job) específico, identificando el trabajo mediante su ```jobId```. Permite la paginación de los errores de carga, lo que facilita la visualización de grandes cantidades de datos de manera eficiente.
-Requiere un token de autenticación en la cabecera de la solicitud.
+Returns the status of a specific upload job, identified by its ```jobId```. Upload errors are paginated, which makes large result sets easier to browse.
+Requires an authentication token in the request header.
 
-#### Parámetros
+#### Parameters
 
-##### Parámetros en la URL
+##### Path parameters
 
-- **id** (Path Parameter):
+- **id**:
 
-  - Tipo: ```String```
-  - Descripción: El jobId del trabajo que se desea consultar. Este parámetro es obligatorio y debe estar presente en la URL de la solicitud.
-  - Ejemplo: ```/jobs/12345```
+  - Type: ```String```
+  - Description: the jobId of the job to query. Required.
+  - Example: ```/jobs/12345```
 
-##### Parámetros en la consulta (query parameters)
+##### Query parameters
 
 - **page**:
 
-  - Tipo: ```Number``` (opcional)
-  - Descripción: El número de página de los resultados que se desea obtener. Si no se proporciona, el valor predeterminado será 1.
-  - Valor predeterminado: 1
-  - Ejemplo: ```?page=2```
+  - Type: ```Number``` (optional)
+  - Description: the page of results to return.
+  - Default: 1
+  - Example: ```?page=2```
 
 - **limit**:
 
-  - Tipo: ```Number``` (opcional)
-  - Descripción: El número de resultados por página. Si no se proporciona, el valor predeterminado será 10.
-  - Valor predeterminado: 10
-  - Ejemplo: ```?limit=20```
+  - Type: ```Number``` (optional)
+  - Description: the number of results per page.
+  - Default: 10
+  - Example: ```?limit=20```
 
-##### Response 
+##### Response
 
-- **Código 200: Éxito**
+- **200 OK**
 
-    - Descripción: Si la solicitud es procesada correctamente, se devolverán los datos del estado del trabajo en formato JSON, con los errores paginados.
-    - Cuerpo de la respuesta:
+    - Description: if the request succeeds, the job status is returned as JSON, with paginated errors.
+    - Response body:
       ```json
       {
         "id": "12345",
@@ -202,45 +202,44 @@ Requiere un token de autenticación en la cabecera de la solicitud.
         "errors": []
       }
       ```
-- **Código 400: Parámetros de paginación inválidos**
+- **400 Invalid pagination parameters**
 
-    - Descripción: Si los parámetros ```page``` o ```limit``` son inválidos (no son números, son menores que 1, etc.), se devolverá un error con el mensaje correspondiente.
-    - Cuerpo de la respuesta:
+    - Description: if ```page``` or ```limit``` is invalid (not a number, less than 1, etc.), an error with the corresponding message is returned.
+    - Response body:
       ```json
       {
         "message": "Invalid pagination parameters"
       }
       ```
-- **Código 404: No encontrado**
+- **404 Not Found**
 
-    - Descripción: Si no se encuentra el trabajo correspondiente al ```jobId```, se devolverá un error con el mensaje correspondiente.
-    - Cuerpo de la respuesta:
+    - Description: if no job matches the ```jobId```, an error with the corresponding message is returned.
+    - Response body:
       ```json
       {
         "message": "Job not found"
       }
       ```
-- **Código 500: Error Interno del Servidor**
+- **500 Internal Server Error**
 
-    - Descripción: Si ocurre un error inesperado en el servidor, se devolverá un mensaje genérico de error interno.
-    - Cuerpo de la respuesta:
+    - Description: if an unexpected server error occurs, a generic internal error message is returned.
+    - Response body:
       ```json
       {
         "message": "Internal Server Error"
       }
       ```
-      
+
 ### Unit testing
 
-Es posible ejecutar los tests de unidad ubicados en ```src/tests/``` mediante el siguiente comando:
+Run the unit tests in ```src/tests/``` with:
 
 ```bash
 yarn test
 ```
 
-## Contacto 
+## Contact
 
 - Email: facundomiglierini@gmail.com
 - LinkedIn: https://ar.linkedin.com/in/facundomiglierini
 - GitHub: @FacundoMiglierini
-
